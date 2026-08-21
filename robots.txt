@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rupeshishi3-bot.github.io/Typing-Website-by-Rupesh-Ishi/sitemap.xml
