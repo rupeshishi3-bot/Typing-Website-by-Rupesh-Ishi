@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCQ Practice | GCC-TBC Objective Test | Typing Website by Rupesh Ishi</title>
+<meta name="description" content="Free GCC-TBC style MCQ practice - 25 objective questions per speed set, timed or untimed, with instant scoring, answer review and personal best tracking.">
+<meta name="author" content="Rupesh Ishi">
+<meta property="og:title" content="MCQ Practice | GCC-TBC Objective Test | Typing Website by Rupesh Ishi">
+<meta property="og:description" content="Free GCC-TBC style MCQ practice - 25 objective questions per speed set, timed or untimed, with instant scoring, answer review and personal best tracking.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rupeshishi3-bot.github.io/Typing-Website-by-Rupesh-Ishi/mcq/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MCQ Practice | GCC-TBC Objective Test | Typing Website by Rupesh Ishi">
+<meta name="twitter:description" content="Free GCC-TBC style MCQ practice - 25 objective questions per speed set, timed or untimed, with instant scoring, answer review and personal best tracking.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://rupeshishi3-bot.github.io/Typing-Website-by-Rupesh-Ishi/mcq/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23181A1F'/%3E%3Crect x='16' y='40' width='68' height='34' rx='6' fill='none' stroke='%23F4B740' stroke-width='6'/%3E%3Ccircle cx='32' cy='57' r='4' fill='%23F4B740'/%3E%3Ccircle cx='50' cy='57' r='4' fill='%23F4B740'/%3E%3Ccircle cx='68' cy='57' r='4' fill='%23F4B740'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body data-page="mcq">
+
+<header class="site-header">
+  <div class="brand">
+    <a class="brand-mark-link" href="../index.html">
+      <span class="brand-mark">Typing Web by Rupesh Ishi</span>
+    </a>
+    <span class="brand-tag">Free online typing speed test</span>
+  </div>
+  <nav class="mode-nav" id="modeNav">
+    <a class="mode-tab" href="../typing/index.html">&#9000; Typing Test</a>
+    <a class="mode-tab active" href="index.html">&#128221; MCQ Practice</a>
+    <a class="mode-tab" href="../email/index.html">&#128231; Email Practice</a>
+  </nav>
+  <div class="header-actions">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+      <span id="themeToggleLabel">&#9789; Light</span>
+    </button>
+    <div class="best-badge" id="bestBadge" hidden>
+      <span class="best-label">Personal Best</span>
+      <span class="best-value" id="bestValue">0 WPM</span>
+    </div>
+    <div class="best-badge" id="mcqBestBadge" hidden>
+      <span class="best-label">MCQ Best</span>
+      <span class="best-value" id="mcqBestValue">0%</span>
+    </div>
+    <div class="best-badge" id="emailBestBadge" hidden>
+      <span class="best-label">Email Best</span>
+      <span class="best-value" id="emailBestValue">0/5</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- MCQ SETUP WIZARD -->
+  <section id="mcqSetup" class="screen active" aria-live="polite">
+    <div class="setup-card">
+
+      <ol class="steps-indicator">
+        <li class="step-dot active" data-mcqdot="1"><span>1</span>Speed set</li>
+        <li class="step-dot" data-mcqdot="2"><span>2</span>Timing</li>
+        <li class="step-dot" data-mcqdot="3"><span>3</span>Ready</li>
+      </ol>
+
+      <!-- STEP 1: SPEED SET -->
+      <div class="step-panel active" data-mcqstep="1">
+        <h2>Select your speed set</h2>
+        <p class="step-hint">Every test is 25 objective questions, same as the real GCC-TBC exam. Each speed set has its own question bank.</p>
+        <div class="chip-grid" id="mcqSpeedChips">
+          <button class="chip active" data-mcqspeed="30">30<small>WPM</small></button>
+          <button class="chip" data-mcqspeed="40">40<small>WPM</small></button>
+          <button class="chip" data-mcqspeed="50">50<small>WPM</small></button>
+        </div>
+        <p class="step-hint" id="mcqBankNotice" style="margin-top:16px;"></p>
+      </div>
+
+      <!-- STEP 2: TIMED OR UNTIMED -->
+      <div class="step-panel" data-mcqstep="2">
+        <h2>Timed or untimed?</h2>
+        <p class="step-hint">The real GCC-TBC objective section gives you 25 minutes for 25 questions. Practice under exam time, or take it slow.</p>
+        <div class="toggle-row">
+          <button class="toggle-btn active" id="mcqTimingTimed">&#9201; Timed (25:00)</button>
+          <button class="toggle-btn" id="mcqTimingUntimed">&#8734; Untimed</button>
+        </div>
+        <p class="step-hint" id="mcqTimingHint">Just like the real exam: 25 minutes for all 25 questions. The test auto-submits when time runs out.</p>
+      </div>
+
+      <!-- STEP 3: READY -->
+      <div class="step-panel" data-mcqstep="3">
+        <h2>Ready to start?</h2>
+        <p class="step-hint">Review your choices below, then hit start when you're set.</p>
+        <ul class="review-list">
+          <li><span>Speed set</span><strong id="mcqReviewSpeed">30 WPM</strong></li>
+          <li><span>Questions</span><strong>25 (fixed)</strong></li>
+          <li><span>Timing</span><strong id="mcqReviewMode">Timed &mdash; 25:00</strong></li>
+        </ul>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-ghost" id="mcqBackBtn" disabled>Back</button>
+        <button class="btn btn-primary" id="mcqNextBtn">Next</button>
+        <button class="btn btn-primary" id="mcqStartBtn" hidden>Start MCQ Practice</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MCQ TEST SCREEN -->
+  <section id="mcqTest" class="screen" hidden>
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-label">Question</span><span class="stat-value" id="mcqStatProgress">1 / 25</span></div>
+      <div class="stat"><span class="stat-label" id="mcqTimeLabel">Time left</span><span class="stat-value" id="mcqStatTime">25:00</span></div>
+      <div class="stat"><span class="stat-label">Set</span><span class="stat-value" id="mcqStatSpeed">30 WPM</span></div>
+    </div>
+
+    <div class="mcq-progress-track">
+      <div class="mcq-progress-fill" id="mcqProgressFill"></div>
+    </div>
+
+    <div class="mcq-question-card">
+      <span class="panel-label" id="mcqQuestionLabel">Question 1 of 20</span>
+      <h2 class="mcq-question-text" id="mcqQuestionText">Loading question&hellip;</h2>
+      <div class="mcq-options" id="mcqOptions"></div>
+      <p class="mcq-feedback" id="mcqFeedback" hidden></p>
+    </div>
+
+    <div class="test-controls">
+      <button class="btn btn-ghost" id="mcqExitBtn">Exit</button>
+      <button class="btn btn-ghost" id="mcqPrevBtn" disabled>&larr; Previous</button>
+      <button class="btn btn-primary" id="mcqNextQBtn" disabled>Next &rarr;</button>
+      <button class="btn btn-primary" id="mcqSubmitBtn" hidden>Submit Test</button>
+    </div>
+  </section>
+
+  <!-- MCQ RESULTS SCREEN -->
+  <section id="mcqResults" class="screen" hidden>
+    <div class="results-card">
+      <p class="results-eyebrow">MCQ practice complete</p>
+      <div class="results-hero">
+        <span class="results-wpm" id="mcqResultsScore">0/25</span>
+        <span class="results-wpm-label">Correct</span>
+      </div>
+      <div class="mcq-pass-banner" id="mcqResultsPassBadge">PASS</div>
+      <div class="results-grid">
+        <div class="result-tile"><span>Score</span><strong id="mcqResultsPercent">0%</strong></div>
+        <div class="result-tile"><span>Correct</span><strong id="mcqResultsCorrect">0</strong></div>
+        <div class="result-tile"><span>Incorrect</span><strong id="mcqResultsIncorrect">0</strong></div>
+        <div class="result-tile"><span>Skipped</span><strong id="mcqResultsSkipped">0</strong></div>
+        <div class="result-tile"><span>Total questions</span><strong id="mcqResultsTotal">0</strong></div>
+        <div class="result-tile"><span>Speed set</span><strong id="mcqResultsSpeed">30 WPM</strong></div>
+        <div class="result-tile"><span>Time taken</span><strong id="mcqResultsTime">0:00</strong></div>
+      </div>
+      <p class="results-message" id="mcqResultsMessage"></p>
+
+      <div class="analysis-block">
+        <span class="panel-label">Answer review</span>
+        <div class="mcq-review-list" id="mcqReviewList"></div>
+      </div>
+
+      <div class="results-actions">
+        <button class="btn btn-ghost" id="mcqTryAgainBtn">Try again</button>
+        <button class="btn btn-primary" id="mcqChangeSettingsBtn">Change settings</button>
+        <a class="btn btn-ghost" href="../index.html">Home</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>Built by <strong>Rupesh Ishi</strong> &mdash; Typing Website. Practice free, improve your speed, own your keyboard.</p>
+</footer>
+
+<script src="../script.js"></script>
+</body>
+</html>
