@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Practice | GCC-TBC Exam Prep | Typing Website by Rupesh Ishi</title>
+<meta name="description" content="Free GCC-TBC style email practice - reproduce a randomly picked reference email's To, Subject, Body and Attachment exactly in 5 minutes, with instant scoring and word-by-word analysis.">
+<meta name="author" content="Rupesh Ishi">
+<meta property="og:title" content="Email Practice | GCC-TBC Exam Prep | Typing Website by Rupesh Ishi">
+<meta property="og:description" content="Free GCC-TBC style email practice - reproduce a randomly picked reference email's To, Subject, Body and Attachment exactly in 5 minutes, with instant scoring and word-by-word analysis.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rupeshishi3-bot.github.io/Typing-Website-by-Rupesh-Ishi/email/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Email Practice | GCC-TBC Exam Prep | Typing Website by Rupesh Ishi">
+<meta name="twitter:description" content="Free GCC-TBC style email practice - reproduce a randomly picked reference email's To, Subject, Body and Attachment exactly in 5 minutes, with instant scoring and word-by-word analysis.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://rupeshishi3-bot.github.io/Typing-Website-by-Rupesh-Ishi/email/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23181A1F'/%3E%3Crect x='16' y='40' width='68' height='34' rx='6' fill='none' stroke='%23F4B740' stroke-width='6'/%3E%3Ccircle cx='32' cy='57' r='4' fill='%23F4B740'/%3E%3Ccircle cx='50' cy='57' r='4' fill='%23F4B740'/%3E%3Ccircle cx='68' cy='57' r='4' fill='%23F4B740'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body data-page="email">
+
+<header class="site-header">
+  <div class="brand">
+    <a class="brand-mark-link" href="../index.html">
+      <span class="brand-mark">Typing Web by Rupesh Ishi</span>
+    </a>
+    <span class="brand-tag">Free online typing speed test</span>
+  </div>
+  <nav class="mode-nav" id="modeNav">
+    <a class="mode-tab" href="../typing/index.html">&#9000; Typing Test</a>
+    <a class="mode-tab" href="../mcq/index.html">&#128221; MCQ Practice</a>
+    <a class="mode-tab active" href="index.html">&#128231; Email Practice</a>
+  </nav>
+  <div class="header-actions">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+      <span id="themeToggleLabel">&#9789; Light</span>
+    </button>
+    <div class="best-badge" id="bestBadge" hidden>
+      <span class="best-label">Personal Best</span>
+      <span class="best-value" id="bestValue">0 WPM</span>
+    </div>
+    <div class="best-badge" id="mcqBestBadge" hidden>
+      <span class="best-label">MCQ Best</span>
+      <span class="best-value" id="mcqBestValue">0%</span>
+    </div>
+    <div class="best-badge" id="emailBestBadge" hidden>
+      <span class="best-label">Email Best</span>
+      <span class="best-value" id="emailBestValue">0/5</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- EMAIL SETUP -->
+  <section id="emailSetup" class="screen active" aria-live="polite">
+    <div class="setup-card">
+      <h2>Email Practice</h2>
+      <p class="step-hint">Just like the real GCC-TBC exam, you won't see which email you'll get until the test starts — a reference email is picked at random. Reproduce its To, Subject, Body and Attachment exactly, in 5 minutes.</p>
+      <ul class="review-list">
+        <li><span>Reference email</span><strong>Random on start</strong></li>
+        <li><span>Time limit</span><strong>5:00 (fixed)</strong></li>
+        <li><span>Marks</span><strong>5 &mdash; half a mark cut per mistake</strong></li>
+      </ul>
+      <div class="wizard-nav">
+        <button class="btn btn-primary" id="emailStartBtn">Start Email Practice</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- EMAIL TEST SCREEN -->
+  <section id="emailTest" class="screen" hidden>
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-label">Time left</span><span class="stat-value" id="emailStatTime">05:00</span></div>
+      <div class="stat"><span class="stat-label">Topic</span><span class="stat-value" id="emailStatTopic">Meeting notice</span></div>
+    </div>
+
+    <div class="test-panels">
+      <div class="reference-panel">
+        <span class="panel-label">Reference email &mdash; reproduce exactly</span>
+        <div class="email-reference-card">
+          <div class="email-reference-row"><span>To</span><strong id="refEmailTo"></strong></div>
+          <div class="email-reference-row"><span>Subject</span><strong id="refEmailSubject"></strong></div>
+          <div class="email-reference-body" id="refEmailBody"></div>
+          <div class="email-reference-row email-reference-attachment"><span>Attachment</span><strong id="refEmailAttachment"></strong></div>
+        </div>
+      </div>
+      <div class="typing-panel">
+        <span class="panel-label">Compose your email</span>
+        <div class="email-fields">
+          <label class="email-field-row">
+            <span>To</span>
+            <input type="text" id="emailInputTo" class="email-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="recipient@example.com">
+          </label>
+          <label class="email-field-row">
+            <span>Subject</span>
+            <input type="text" id="emailInputSubject" class="email-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Subject line">
+          </label>
+          <label class="email-field-row email-field-body-row">
+            <span>Body</span>
+            <textarea id="emailInputBody" class="typing-textarea email-body-textarea" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Type the body of the email&hellip;"></textarea>
+          </label>
+          <label class="email-field-row email-field-attachment-row">
+            <span>Attachment</span>
+            <select id="emailInputAttachment" class="email-input email-select">
+              <option value="" disabled selected>&mdash; Select attachment &mdash;</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-controls">
+      <button class="btn btn-ghost" id="emailRestartBtn">Restart</button>
+      <button class="btn btn-primary" id="emailSubmitBtn">Submit</button>
+    </div>
+  </section>
+
+  <!-- EMAIL RESULTS SCREEN -->
+  <section id="emailResults" class="screen" hidden>
+    <div class="results-card">
+      <p class="results-eyebrow" id="emailResultsEyebrow">Email practice complete</p>
+      <div class="results-hero">
+        <span class="results-wpm" id="emailResultsMarks">0</span>
+        <span class="results-wpm-label">Marks out of 5</span>
+        <span class="pass-badge" id="emailResultsPassBadge">PASS</span>
+      </div>
+      <div class="results-grid">
+        <div class="result-tile"><span>To address</span><strong id="emailResultsTo">&mdash;</strong></div>
+        <div class="result-tile"><span>Subject</span><strong id="emailResultsSubject">&mdash;</strong></div>
+        <div class="result-tile"><span>Attachment</span><strong id="emailResultsAttachment">&mdash;</strong></div>
+        <div class="result-tile"><span>Body</span><strong id="emailResultsBody">0 mistakes</strong></div>
+        <div class="result-tile"><span>Time taken</span><strong id="emailResultsTime">0:00</strong></div>
+        <div class="result-tile"><span>Total mistakes</span><strong id="emailResultsMistakes">0</strong></div>
+      </div>
+      <p class="results-message" id="emailResultsMessage"></p>
+
+      <div class="analysis-block">
+        <span class="panel-label">Body &mdash; word-by-word analysis</span>
+        <div class="analysis-text" id="emailAnalysisText"></div>
+        <p class="analysis-legend">
+          <span class="legend-dot legend-correct"></span> Correct
+          <span class="legend-dot legend-half"></span> Case/punctuation
+          <span class="legend-dot legend-incorrect"></span> Wrong word
+          <span class="legend-dot legend-extra"></span> Extra word
+          <span class="legend-dot legend-skipped"></span> Omitted
+        </p>
+      </div>
+
+      <div class="results-actions">
+        <button class="btn btn-ghost" id="emailTryAgainBtn">Try again</button>
+        <button class="btn btn-primary" id="emailChangeSettingsBtn">Change settings</button>
+        <a class="btn btn-ghost" href="../index.html">Home</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>Built by <strong>Rupesh Ishi</strong> &mdash; Typing Website. Practice free, improve your speed, own your keyboard.</p>
+</footer>
+
+<script src="../script.js"></script>
+</body>
+</html>
