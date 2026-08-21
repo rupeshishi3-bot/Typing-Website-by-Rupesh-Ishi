@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GCC-TBC English Typing Test 50 WPM | Free Practice</title>
+<meta name="description" content="Free English typing speed test at a 50 WPM target. Timed or untimed practice with live WPM tracking, accuracy scoring and a full mistake breakdown - built for govt. typing exam prep.">
+<meta name="author" content="Rupesh Ishi">
+<meta property="og:title" content="GCC-TBC English Typing Test 50 WPM | Free Practice">
+<meta property="og:description" content="Free English typing speed test at a 50 WPM target. Timed or untimed practice with live WPM tracking, accuracy scoring and a full mistake breakdown - built for govt. typing exam prep.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rupeshishi3-bot.github.io/Typing-Website-by-Rupesh-Ishi/typing/english/50-wpm/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="GCC-TBC English Typing Test 50 WPM | Free Practice">
+<meta name="twitter:description" content="Free English typing speed test at a 50 WPM target. Timed or untimed practice with live WPM tracking, accuracy scoring and a full mistake breakdown - built for govt. typing exam prep.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://rupeshishi3-bot.github.io/Typing-Website-by-Rupesh-Ishi/typing/english/50-wpm/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23181A1F'/%3E%3Crect x='16' y='40' width='68' height='34' rx='6' fill='none' stroke='%23F4B740' stroke-width='6'/%3E%3Ccircle cx='32' cy='57' r='4' fill='%23F4B740'/%3E%3Ccircle cx='50' cy='57' r='4' fill='%23F4B740'/%3E%3Ccircle cx='68' cy='57' r='4' fill='%23F4B740'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../style.css">
+</head>
+<body data-page="typing-test" data-speed="50">
+
+<header class="site-header">
+  <div class="brand">
+    <a class="brand-mark-link" href="../../../index.html">
+      <span class="brand-mark">Typing Web by Rupesh Ishi</span>
+    </a>
+    <span class="brand-tag">Free online typing speed test</span>
+  </div>
+  <nav class="mode-nav" id="modeNav">
+    <a class="mode-tab active" href="../../../typing/index.html">&#9000; Typing Test</a>
+    <a class="mode-tab" href="../../../mcq/index.html">&#128221; MCQ Practice</a>
+    <a class="mode-tab" href="../../../email/index.html">&#128231; Email Practice</a>
+  </nav>
+  <div class="header-actions">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+      <span id="themeToggleLabel">&#9789; Light</span>
+    </button>
+    <div class="best-badge" id="bestBadge" hidden>
+      <span class="best-label">Personal Best</span>
+      <span class="best-value" id="bestValue">0 WPM</span>
+    </div>
+    <div class="best-badge" id="mcqBestBadge" hidden>
+      <span class="best-label">MCQ Best</span>
+      <span class="best-value" id="mcqBestValue">0%</span>
+    </div>
+    <div class="best-badge" id="emailBestBadge" hidden>
+      <span class="best-label">Email Best</span>
+      <span class="best-value" id="emailBestValue">0/5</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- SETUP WIZARD (speed is fixed by this page/URL - no speed step) -->
+  <section id="setup" class="screen active" aria-live="polite">
+    <div class="setup-card">
+
+      <ol class="steps-indicator">
+        <li class="step-dot active" data-dot="1"><span>1</span>Duration</li>
+        <li class="step-dot" data-dot="2"><span>2</span>Ready</li>
+      </ol>
+
+      <!-- STEP 1: DURATION -->
+      <div class="step-panel active" data-step="1">
+        <h2>Practice with a time limit?</h2>
+        <p class="step-hint">Timed mode mirrors the govt. exam format and auto-submits when the clock runs out. Target speed is set to <strong>50 WPM</strong> for this page.</p>
+        <div class="toggle-row">
+          <button class="toggle-btn active" id="timedYes">Yes, time me</button>
+          <button class="toggle-btn" id="timedNo">No, untimed</button>
+        </div>
+        <div class="chip-grid" id="durationChips">
+          <button class="chip" data-duration="3">3<small>min</small></button>
+          <button class="chip active" data-duration="5">5<small>min</small></button>
+          <button class="chip" data-duration="7">7<small>min</small></button>
+          <button class="chip" data-duration="10">10<small>min</small></button>
+        </div>
+      </div>
+
+      <!-- STEP 2: READY -->
+      <div class="step-panel" data-step="2">
+        <h2>Ready to start?</h2>
+        <p class="step-hint">Review your choices below, then hit start when you're set.</p>
+        <ul class="review-list">
+          <li><span>Language</span><strong>English</strong></li>
+          <li><span>Target speed</span><strong id="reviewSpeed">50 WPM</strong></li>
+          <li><span>Timed</span><strong id="reviewTimed">Yes &mdash; 5 min</strong></li>
+        </ul>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-ghost" id="backBtn" disabled>Back</button>
+        <button class="btn btn-primary" id="nextBtn">Next</button>
+        <button class="btn btn-primary" id="startBtn" hidden>Start typing</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEST SCREEN -->
+  <section id="test" class="screen" hidden>
+    <div class="stats-bar">
+      <div class="stat"><span class="stat-label">Time</span><span class="stat-value" id="statTime">05:00</span></div>
+      <div class="stat"><span class="stat-label">WPM</span><span class="stat-value" id="statWpm">0</span></div>
+    </div>
+
+    <div class="test-panels">
+      <div class="reference-panel">
+        <span class="panel-label">Passage</span>
+        <div class="reference-text" id="referenceText"></div>
+      </div>
+      <div class="typing-panel">
+        <span class="panel-label">Your typing</span>
+        <textarea id="typingInput" class="typing-textarea" placeholder="Press Tab to indent, then start typing&hellip;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Typing input"></textarea>
+      </div>
+    </div>
+
+    <div class="test-controls">
+      <button class="btn btn-ghost" id="restartBtn">Restart</button>
+      <button class="btn btn-primary" id="submitBtn">Submit</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section id="results" class="screen" hidden>
+    <div class="results-card">
+      <p class="results-eyebrow" id="resultsEyebrow">Test complete</p>
+      <div class="results-hero">
+        <span class="results-wpm" id="resultsWpm">0</span>
+        <span class="results-wpm-label">Net WPM</span>
+        <span class="pass-badge" id="resultsPassBadge">PASS</span>
+      </div>
+      <div class="results-grid">
+        <div class="result-tile"><span>Gross WPM</span><strong id="resultsGrossWpm">0</strong></div>
+        <div class="result-tile"><span>Marks (/40)</span><strong id="resultsMarks">0 / 40</strong></div>
+        <div class="result-tile"><span>Accuracy</span><strong id="resultsAcc">0%</strong></div>
+        <div class="result-tile"><span>Time taken</span><strong id="resultsTime">0:00</strong></div>
+        <div class="result-tile"><span>Words typed</span><strong id="resultsChars">0</strong></div>
+        <div class="result-tile"><span>Full mistakes</span><strong id="resultsMistakes">0</strong></div>
+      </div>
+      <p class="results-message" id="resultsMessage"></p>
+
+      <div class="mistake-breakdown">
+        <span class="panel-label">Mistake breakdown &mdash; 1 mark cut per mistake</span>
+        <div class="breakdown-grid">
+          <div class="breakdown-tile"><span>Omission</span><strong id="breakdownOmission">0</strong></div>
+          <div class="breakdown-tile"><span>Substitution</span><strong id="breakdownSubstitution">0</strong></div>
+          <div class="breakdown-tile"><span>Addition</span><strong id="breakdownAddition">0</strong></div>
+          <div class="breakdown-tile"><span>Spelling</span><strong id="breakdownSpelling">0</strong></div>
+          <div class="breakdown-tile"><span>Spacing</span><strong id="breakdownSpacing">0</strong></div>
+          <div class="breakdown-tile"><span>Capitalization</span><strong id="breakdownCase">0</strong></div>
+          <div class="breakdown-tile"><span>Punctuation</span><strong id="breakdownPunctuation">0</strong></div>
+          <div class="breakdown-tile"><span>Tab indent</span><strong id="breakdownIndent">&mdash;</strong></div>
+        </div>
+      </div>
+
+      <div class="analysis-block">
+        <span class="panel-label">Your submitted text &mdash; word-by-word analysis</span>
+        <div class="analysis-text" id="analysisText"></div>
+        <p class="analysis-legend">
+          <span class="legend-dot legend-correct"></span> Correct
+          <span class="legend-dot legend-half"></span> Case/punctuation
+          <span class="legend-dot legend-incorrect"></span> Wrong word
+          <span class="legend-dot legend-extra"></span> Extra word
+          <span class="legend-dot legend-skipped"></span> Omitted
+        </p>
+      </div>
+
+      <div class="results-actions">
+        <button class="btn btn-ghost" id="tryAgainBtn">Try again</button>
+        <button class="btn btn-primary" id="changeSettingsBtn">Change settings</button>
+        <a class="btn btn-ghost" href="../../../typing/english/index.html">Typing Practice</a>
+        <a class="btn btn-ghost" href="../../../index.html">Home</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>Built by <strong>Rupesh Ishi</strong> &mdash; Typing Website. Practice free, improve your speed, own your keyboard.</p>
+</footer>
+
+<script src="../../../script.js"></script>
+</body>
+</html>
