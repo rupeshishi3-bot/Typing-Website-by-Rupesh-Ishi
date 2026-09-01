@@ -209,6 +209,25 @@ function showScreen(target){
   // /mcq/ has mcqSetup/mcqTest/mcqResults), so this just toggles
   // whatever .screen elements actually exist on the current page.
   document.querySelectorAll(".screen").forEach(s => { s.hidden = (s !== target); });
+  if (target && target.id) {
+    if (target.id === "landing") {
+      document.body.dataset.page = "home";
+    } else if (target.id === "results") {
+      document.body.dataset.page = "typing-results";
+    } else if (target.id === "test") {
+      document.body.dataset.page = "typing-test";
+    } else if (target.id === "setup") {
+      document.body.dataset.page = "typing";
+    } else if (target.id === "mcqResults") {
+      document.body.dataset.page = "mcq-results";
+    } else if (target.id.startsWith("mcq")) {
+      document.body.dataset.page = "mcq";
+    } else if (target.id === "emailResults") {
+      document.body.dataset.page = "email-results";
+    } else if (target.id.startsWith("email")) {
+      document.body.dataset.page = "email";
+    }
+  }
 }
 
 /* Shared by typing, MCQ, and email timers — defined here (global scope)
@@ -905,7 +924,7 @@ const THEME_KEY = "rupesh_typing_theme";
 
 function applyTheme(theme){
   document.documentElement.setAttribute("data-theme", theme);
-  themeToggleLabel.innerHTML = theme === "light" ? "&#9789; Dark" : "&#9728; Light";
+  themeToggleLabel.innerHTML = theme === "light" ? "🌙 Dark" : "☀️ Light";
   localStorage.setItem(THEME_KEY, theme);
 }
 

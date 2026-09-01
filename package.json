@@ -1,0 +1,15 @@
+{
+  "name": "typing-website-by-rupesh-ishi",
+  "version": "1.0.0",
+  "description": "Typing Website by Rupesh Ishi - Free Online Typing Speed Test, MCQ Practice, and Email Practice",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "echo 'Build successful'",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

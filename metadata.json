@@ -1,0 +1,8 @@
+{
+  "name": "Typing Website by Rupesh Ishi",
+  "description": "Free online typing speed test with live WPM tracking, GCC-TBC typing exam prep, MCQ practice, and email practice.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
