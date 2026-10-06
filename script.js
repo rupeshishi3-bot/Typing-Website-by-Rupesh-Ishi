@@ -3654,3 +3654,115 @@ if (isEmailPage) {
   loadEmailBestScore();
   showScreen(emailSetupScreen);
 }
+
+/* ---------------------------------------------
+   26. MOBILE NAVIGATION DRAWER
+--------------------------------------------- */
+const mobileToggle = document.getElementById("mobileToggle");
+const mobileDrawer = document.getElementById("mobileDrawer");
+const mobileDrawerClose = document.getElementById("mobileDrawerClose");
+
+if (mobileToggle && mobileDrawer) {
+  mobileToggle.addEventListener("click", () => {
+    mobileDrawer.classList.add("open");
+    mobileDrawer.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  });
+  if (mobileDrawerClose) {
+    mobileDrawerClose.addEventListener("click", closeMobileDrawer);
+  }
+  mobileDrawer.addEventListener("click", (e) => {
+    if (e.target === mobileDrawer) {
+      closeMobileDrawer();
+    }
+  });
+  document.querySelectorAll(".mobile-nav-item a").forEach(link => {
+    link.addEventListener("click", closeMobileDrawer);
+  });
+}
+
+function closeMobileDrawer() {
+  if (mobileDrawer) {
+    mobileDrawer.classList.remove("open");
+    mobileDrawer.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+}
+
+/* ---------------------------------------------
+   27. HOMEPAGE QUICK 60-SEC DRILL
+--------------------------------------------- */
+const drillInput = document.getElementById("drillInput");
+const drillPassage = document.getElementById("drillPassage");
+const drillTime = document.getElementById("drillTime");
+const drillWpm = document.getElementById("drillWpm");
+const drillAcc = document.getElementById("drillAcc");
+const drillResetBtn = document.getElementById("drillResetBtn");
+
+if (drillInput && drillPassage) {
+  let drillStartTime = null;
+  let drillTimer = null;
+  let drillSeconds = 60;
+  const targetText = drillPassage.textContent.trim().replace(/\s+/g, " ");
+
+  function resetDrill() {
+    clearInterval(drillTimer);
+    drillTimer = null;
+    drillStartTime = null;
+    drillSeconds = 60;
+    drillInput.value = "";
+    drillInput.disabled = false;
+    drillTime.textContent = "01:00";
+    drillWpm.textContent = "0 WPM";
+    drillAcc.textContent = "100%";
+    drillInput.focus();
+  }
+
+  if (drillResetBtn) {
+    drillResetBtn.addEventListener("click", resetDrill);
+  }
+
+  drillInput.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const start = drillInput.selectionStart;
+      const end = drillInput.selectionEnd;
+      drillInput.value = drillInput.value.substring(0, start) + "    " + drillInput.value.substring(end);
+      drillInput.selectionStart = drillInput.selectionEnd = start + 4;
+    }
+  });
+
+  drillInput.addEventListener("input", () => {
+    if (!drillStartTime) {
+      drillStartTime = Date.now();
+      drillTimer = setInterval(() => {
+        drillSeconds--;
+        const m = Math.floor(drillSeconds / 60).toString().padStart(2, "0");
+        const s = Math.floor(drillSeconds % 60).toString().padStart(2, "0");
+        drillTime.textContent = `${m}:${s}`;
+        if (drillSeconds <= 0) {
+          clearInterval(drillTimer);
+          drillInput.disabled = true;
+          drillTime.textContent = "00:00";
+        }
+      }, 1000);
+    }
+
+    const typed = drillInput.value;
+    const elapsedMinutes = Math.max((Date.now() - drillStartTime) / 60000, 0.01);
+    const wordsTyped = typed.trim().split(/\s+/).filter(Boolean).length;
+    const wpm = Math.round(wordsTyped / elapsedMinutes);
+    drillWpm.textContent = `${wpm} WPM`;
+
+    // Accuracy
+    let matches = 0;
+    for (let i = 0; i < typed.length; i++) {
+      if (i < targetText.length && typed[i] === targetText[i]) {
+        matches++;
+      }
+    }
+    const acc = typed.length > 0 ? Math.round((matches / typed.length) * 100) : 100;
+    drillAcc.textContent = `${acc}%`;
+  });
+}
+
