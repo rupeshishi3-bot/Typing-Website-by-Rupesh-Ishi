@@ -918,13 +918,20 @@ if (isTypingTestPage) {
 
 }
 /* ---------------------------------------------
-   14. THEME (light / dark)
+   14. THEME (8 Themes: Serika, Carbon, Nord, Dracula, Cyberpunk, Light, Matrix, Sunset)
 --------------------------------------------- */
 const THEME_KEY = "rupesh_typing_theme";
 
 function applyTheme(theme){
   document.documentElement.setAttribute("data-theme", theme);
-  themeToggleLabel.innerHTML = theme === "light" ? "🌙 Dark" : "☀️ Light";
+  const themeToggleLabelEl = document.getElementById("themeToggleLabel");
+  if (themeToggleLabelEl) {
+    themeToggleLabelEl.innerHTML = (theme === "light" || theme === "paper-light") ? "🌙 Dark" : "☀️ Light";
+  }
+  const themeSelectEl = document.getElementById("themeSelect");
+  if (themeSelectEl) {
+    themeSelectEl.value = theme;
+  }
   localStorage.setItem(THEME_KEY, theme);
 }
 
@@ -932,16 +939,26 @@ function initTheme(){
   const saved = localStorage.getItem(THEME_KEY);
   if (saved){
     applyTheme(saved);
-    return;
+  } else {
+    applyTheme("serika-dark");
   }
-  const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
-  applyTheme(prefersLight ? "light" : "dark");
-}
 
-themeToggle.addEventListener("click", () => {
-  const current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-  applyTheme(current === "light" ? "dark" : "light");
-});
+  const themeSelectEl = document.getElementById("themeSelect");
+  if (themeSelectEl) {
+    themeSelectEl.addEventListener("change", (e) => {
+      applyTheme(e.target.value);
+    });
+  }
+
+  const themeToggleEl = document.getElementById("themeToggle");
+  if (themeToggleEl) {
+    themeToggleEl.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme") || "serika-dark";
+      const isLight = (current === "light" || current === "paper-light");
+      applyTheme(isLight ? "serika-dark" : "light");
+    });
+  }
+}
 
 /* ---------------------------------------------
    15. MCQ QUESTION BANK
@@ -3765,4 +3782,1638 @@ if (drillInput && drillPassage) {
     drillAcc.textContent = `${acc}%`;
   });
 }
+
+/* ============================================================
+   28. RUPESH ISHI TYPING — UNIFIED ENGINE (MONKEYTYPE + TYPINGCLUB)
+   ============================================================ */
+
+/* ---------------------------------------------
+   A. AUDIO SYNTHESIZER (Web Audio API)
+   --------------------------------------------- */
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playAudioFeedback(type = "click") {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    if (!audioCtx) return;
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    if (type === "click") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(680, now);
+      osc.frequency.exponentialRampToValueAtTime(320, now + 0.03);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+      osc.start(now);
+      osc.stop(now + 0.035);
+    } else if (type === "error") {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(140, now);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      osc.start(now);
+      osc.stop(now + 0.075);
+    } else if (type === "success") {
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now);
+      osc.stop(now + 0.23);
+    }
+  } catch (e) {
+    // Audio unsupported or blocked by autoplay
+  }
+}
+
+const soundToggleBtn = document.getElementById("soundToggleBtn");
+const soundIcon = document.getElementById("soundIcon");
+if (soundToggleBtn) {
+  const savedSound = localStorage.getItem("rupesh_sound_enabled");
+  if (savedSound !== null) {
+    soundEnabled = savedSound === "true";
+  }
+  updateSoundUI();
+
+  soundToggleBtn.addEventListener("click", () => {
+    soundEnabled = !soundEnabled;
+    localStorage.setItem("rupesh_sound_enabled", soundEnabled);
+    updateSoundUI();
+    if (soundEnabled) playAudioFeedback("click");
+  });
+}
+
+function updateSoundUI() {
+  if (!soundToggleBtn) return;
+  soundToggleBtn.classList.toggle("active", soundEnabled);
+  if (soundIcon) soundIcon.textContent = soundEnabled ? "🔊" : "🔇";
+}
+
+/* ---------------------------------------------
+   B. APP NAVIGATION (Tabs & Views)
+   --------------------------------------------- */
+window.appNav = function(viewName) {
+  const views = ["test", "academy", "gcctbc", "game", "mcq", "email", "stats"];
+  views.forEach(v => {
+    const el = document.getElementById(`view-${v}`);
+    if (el) el.hidden = (v !== viewName);
+
+    const btn = document.getElementById(`nav${v.charAt(0).toUpperCase() + v.slice(1)}`);
+    if (btn) btn.classList.toggle("active", v === viewName);
+  });
+
+  if (viewName === "test") {
+    focusMkInput();
+  } else if (viewName === "academy") {
+    renderAcademyLessons();
+  } else if (viewName === "stats") {
+    renderStatsDashboard();
+  } else if (viewName === "mcq") {
+    if (!inMcqCurrentQuestions.length) resetInMcq();
+  } else if (viewName === "email") {
+    if (!inEmailActiveSample) resetInEmail();
+  }
+};
+
+/* ---------------------------------------------
+   C. MONKEYTYPE SPEED ENGINE
+   --------------------------------------------- */
+const COMMON_WORDS = [
+  "the", "be", "to", "of", "and", "a", "in", "that", "have", "it",
+  "for", "not", "on", "with", "he", "as", "you", "do", "at", "this",
+  "but", "his", "by", "from", "they", "we", "say", "her", "she", "or",
+  "an", "will", "my", "one", "all", "would", "there", "their", "what",
+  "so", "up", "out", "if", "about", "who", "get", "which", "go", "me",
+  "when", "make", "can", "like", "time", "no", "just", "him", "know",
+  "take", "people", "into", "year", "your", "good", "some", "could",
+  "them", "see", "other", "than", "then", "now", "look", "only", "come",
+  "its", "over", "think", "also", "back", "after", "use", "two", "how",
+  "our", "work", "first", "well", "way", "even", "new", "want", "because",
+  "any", "these", "give", "day", "most", "us", "write", "great", "small",
+  "number", "world", "point", "hand", "high", "place", "hold", "turn",
+  "real", "leave", "call", "mean", "move", "live", "found", "right",
+  "line", "help", "city", "tree", "river", "state", "study", "still",
+  "learn", "should", "school", "never", "start", "keep", "light", "house",
+  "mind", "clear", "focus", "power", "system", "sound", "water", "speed"
+];
+
+const QUOTES_POOL = {
+  short: [
+    "Practice does not simply make perfect, it makes permanent.",
+    "Simplicity is the prerequisite for reliability.",
+    "The secret of getting ahead is getting started.",
+    "Small daily improvements over time lead to stunning results."
+  ],
+  medium: [
+    "Clear communication is the foundation of every successful organization. When employees understand their duties clearly, productivity improves naturally.",
+    "Learning to touch type without looking at the keyboard saves hundreds of hours over the course of a career.",
+    "Technology continues to reshape the way people work, learn, and collaborate across borders and time zones."
+  ],
+  long: [
+    "Water is essential for all forms of life on this planet. Rivers, lakes, and oceans regulate climate and support agriculture. Protecting these resources from pollution and overuse remains one of the most urgent global challenges of our time.",
+    "The old library at the corner of the street had stood for over a century. Its wooden shelves, worn smooth by generations of readers, still held rare manuscripts alongside modern paperbacks."
+  ]
+};
+
+const mkState = {
+  mode: "time", // "time" | "words" | "quote" | "custom"
+  subOption: 30, // 15, 30, 60, 120 OR 10, 25, 50, 100
+  punctuation: false,
+  numbers: false,
+
+  words: [],
+  currentWordIdx: 0,
+  currentLetterIdx: 0,
+  wordEntries: [], // { typed: string, isCorrect: boolean, errors: [] }
+
+  running: false,
+  completed: false,
+  startTime: null,
+  timerInterval: null,
+  timeRemaining: 30,
+  elapsedSeconds: 0,
+
+  totalKeystrokes: 0,
+  correctKeystrokes: 0,
+  mistakesCount: 0,
+  extraLettersCount: 0,
+
+  wpmHistory: [], // per second [ { second: 1, wpm: 60, errors: 0 } ]
+  mistypedKeys: {}, // char -> count
+  currentLineOffset: 0
+};
+
+const mkWordsWrapper = document.getElementById("mkWordsWrapper");
+const mkCaret = document.getElementById("mkCaret");
+const mkHiddenInput = document.getElementById("mkHiddenInput");
+const mkTypingBox = document.getElementById("mkTypingBox");
+const mkTimer = document.getElementById("mkTimer");
+const mkLiveWpm = document.getElementById("mkLiveWpm");
+const mkLiveAcc = document.getElementById("mkLiveAcc");
+const mkSubGroup = document.getElementById("mkSubGroup");
+const mkCapsWarning = document.getElementById("mkCapsWarning");
+const mkUnfocusedBanner = document.getElementById("mkUnfocusedBanner");
+const mkResultsCard = document.getElementById("mkResultsCard");
+
+function setMkMode(mode) {
+  mkState.mode = mode;
+  document.querySelectorAll(".mk-config-btn[data-mode]").forEach(b => {
+    b.classList.toggle("active", b.dataset.mode === mode);
+  });
+
+  renderMkSubOptions();
+  restartMkTest();
+}
+
+function renderMkSubOptions() {
+  if (!mkSubGroup) return;
+  mkSubGroup.innerHTML = "";
+
+  let options = [];
+  if (mkState.mode === "time") {
+    options = [15, 30, 60, 120];
+    if (!options.includes(mkState.subOption)) mkState.subOption = 30;
+  } else if (mkState.mode === "words") {
+    options = [10, 25, 50, 100];
+    if (!options.includes(mkState.subOption)) mkState.subOption = 50;
+  } else if (mkState.mode === "quote") {
+    options = ["short", "medium", "long"];
+    if (!options.includes(mkState.subOption)) mkState.subOption = "medium";
+  }
+
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = `mk-config-btn ${mkState.subOption === opt ? "active" : ""}`;
+    btn.textContent = opt;
+    btn.onclick = () => {
+      mkState.subOption = opt;
+      document.querySelectorAll("#mkSubGroup .mk-config-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      restartMkTest();
+    };
+    mkSubGroup.appendChild(btn);
+  });
+}
+
+function toggleModifier(mod) {
+  if (mod === "punctuation") {
+    mkState.punctuation = !mkState.punctuation;
+    const btn = document.getElementById("btnPunctuation");
+    if (btn) btn.classList.toggle("active", mkState.punctuation);
+  } else if (mod === "numbers") {
+    mkState.numbers = !mkState.numbers;
+    const btn = document.getElementById("btnNumbers");
+    if (btn) btn.classList.toggle("active", mkState.numbers);
+  }
+  restartMkTest();
+}
+
+function generateWordsList() {
+  let count = 60;
+  if (mkState.mode === "words") {
+    count = parseInt(mkState.subOption, 10);
+  } else if (mkState.mode === "time") {
+    count = Math.max(mkState.subOption * 2, 60);
+  } else if (mkState.mode === "quote") {
+    const quotes = QUOTES_POOL[mkState.subOption] || QUOTES_POOL.medium;
+    const q = quotes[Math.floor(Math.random() * quotes.length)];
+    return q.split(/\s+/).filter(Boolean);
+  } else if (mkState.mode === "custom" && mkState.customText) {
+    return mkState.customText.trim().split(/\s+/).filter(Boolean);
+  }
+
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    let word = COMMON_WORDS[Math.floor(Math.random() * COMMON_WORDS.length)];
+    if (mkState.punctuation) {
+      if (Math.random() < 0.25) {
+        word = word.charAt(0).toUpperCase() + word.slice(1);
+      }
+      if (Math.random() < 0.2) {
+        const puncs = [",", ".", "!", "?", ";", "'"];
+        word += puncs[Math.floor(Math.random() * puncs.length)];
+      }
+    }
+    if (mkState.numbers && Math.random() < 0.15) {
+      word = Math.floor(Math.random() * 999).toString();
+    }
+    result.push(word);
+  }
+  return result;
+}
+
+function restartMkTest(retrySame = false) {
+  clearInterval(mkState.timerInterval);
+  mkState.timerInterval = null;
+  mkState.running = false;
+  mkState.completed = false;
+  mkState.startTime = null;
+  mkState.currentWordIdx = 0;
+  mkState.currentLetterIdx = 0;
+  mkState.totalKeystrokes = 0;
+  mkState.correctKeystrokes = 0;
+  mkState.mistakesCount = 0;
+  mkState.extraLettersCount = 0;
+  mkState.wpmHistory = [];
+  mkState.currentLineOffset = 0;
+
+  if (mkResultsCard) mkResultsCard.hidden = true;
+  if (mkTypingBox) mkTypingBox.style.display = "block";
+
+  if (!retrySame || !mkState.words.length) {
+    mkState.words = generateWordsList();
+  }
+
+  mkState.wordEntries = mkState.words.map(w => ({ typed: "", isCorrect: null, errors: [] }));
+
+  if (mkState.mode === "time") {
+    mkState.timeRemaining = parseInt(mkState.subOption, 10);
+    if (mkTimer) mkTimer.textContent = mkState.timeRemaining;
+  } else {
+    if (mkTimer) mkTimer.textContent = `0 / ${mkState.words.length}`;
+  }
+
+  if (mkLiveWpm) mkLiveWpm.textContent = "0";
+  if (mkLiveAcc) mkLiveAcc.textContent = "100";
+
+  renderMkWords();
+  updateMkCaret();
+  focusMkInput();
+}
+
+function renderMkWords() {
+  if (!mkWordsWrapper) return;
+  mkWordsWrapper.innerHTML = "";
+  mkWordsWrapper.style.transform = "translateY(0px)";
+
+  mkState.words.forEach((w, wIdx) => {
+    const wordEl = document.createElement("div");
+    wordEl.className = "mk-word";
+    wordEl.id = `mkWord_${wIdx}`;
+
+    for (let cIdx = 0; cIdx < w.length; cIdx++) {
+      const letterEl = document.createElement("span");
+      letterEl.className = "mk-letter";
+      letterEl.id = `mkLetter_${wIdx}_${cIdx}`;
+      letterEl.textContent = w[cIdx];
+      wordEl.appendChild(letterEl);
+    }
+    mkWordsWrapper.appendChild(wordEl);
+  });
+}
+
+function updateMkCaret() {
+  if (!mkCaret || !mkWordsWrapper) return;
+  const currentWordEl = document.getElementById(`mkWord_${mkState.currentWordIdx}`);
+  if (!currentWordEl) return;
+
+  const currentLetterEl = document.getElementById(`mkLetter_${mkState.currentWordIdx}_${mkState.currentLetterIdx}`);
+  const wrapperRect = mkWordsWrapper.getBoundingClientRect();
+
+  if (currentLetterEl) {
+    const letterRect = currentLetterEl.getBoundingClientRect();
+    mkCaret.style.left = `${letterRect.left - wrapperRect.left}px`;
+    mkCaret.style.top = `${letterRect.top - wrapperRect.top}px`;
+  } else {
+    // End of current word
+    const lastLetterEl = currentWordEl.lastElementChild;
+    if (lastLetterEl) {
+      const lastRect = lastLetterEl.getBoundingClientRect();
+      mkCaret.style.left = `${lastRect.right - wrapperRect.left}px`;
+      mkCaret.style.top = `${lastRect.top - wrapperRect.top}px`;
+    }
+  }
+
+  // Smooth line scrolling
+  const wordTop = currentWordEl.offsetTop;
+  if (wordTop > 45) {
+    mkWordsWrapper.style.transform = `translateY(-${wordTop - 10}px)`;
+  } else {
+    mkWordsWrapper.style.transform = "translateY(0px)";
+  }
+}
+
+function focusMkInput() {
+  if (mkHiddenInput) {
+    mkHiddenInput.value = "";
+    mkHiddenInput.focus();
+  }
+  if (mkUnfocusedBanner) mkUnfocusedBanner.hidden = true;
+}
+
+if (mkTypingBox) {
+  mkTypingBox.addEventListener("click", focusMkInput);
+}
+
+if (mkHiddenInput) {
+  mkHiddenInput.addEventListener("blur", () => {
+    if (mkState.running && !mkState.completed && mkUnfocusedBanner) {
+      mkUnfocusedBanner.hidden = false;
+    }
+  });
+
+  mkHiddenInput.addEventListener("keydown", (e) => {
+    if (e.getModifierState && e.getModifierState("CapsLock")) {
+      if (mkCapsWarning) mkCapsWarning.hidden = false;
+    } else {
+      if (mkCapsWarning) mkCapsWarning.hidden = true;
+    }
+
+    if (mkState.completed) return;
+
+    // Start timer on first active keypress
+    if (!mkState.running && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      startMkTimer();
+    }
+
+    if (e.key === "Tab") {
+      e.preventDefault();
+      restartMkTest();
+      return;
+    }
+
+    if (e.key === "Escape") {
+      restartMkTest();
+      return;
+    }
+
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      handleMkBackspace(e.ctrlKey);
+      return;
+    }
+
+    if (e.key === " ") {
+      e.preventDefault();
+      handleMkSpace();
+      return;
+    }
+
+    if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      e.preventDefault();
+      handleMkChar(e.key);
+    }
+  });
+}
+
+function startMkTimer() {
+  mkState.running = true;
+  mkState.startTime = Date.now();
+  mkState.elapsedSeconds = 0;
+
+  if (mkCaret) mkCaret.classList.add("typing");
+
+  mkState.timerInterval = setInterval(() => {
+    mkState.elapsedSeconds++;
+
+    // Calculate live speed
+    const elapsedMinutes = mkState.elapsedSeconds / 60;
+    const wpm = Math.round((mkState.correctKeystrokes / 5) / elapsedMinutes) || 0;
+    const acc = mkState.totalKeystrokes > 0 ? Math.round((mkState.correctKeystrokes / mkState.totalKeystrokes) * 100) : 100;
+
+    if (mkLiveWpm) mkLiveWpm.textContent = wpm;
+    if (mkLiveAcc) mkLiveAcc.textContent = acc;
+
+    // Log history per second for chart
+    mkState.wpmHistory.push({
+      second: mkState.elapsedSeconds,
+      wpm: wpm,
+      errors: mkState.mistakesCount
+    });
+
+    if (mkState.mode === "time") {
+      mkState.timeRemaining--;
+      if (mkTimer) mkTimer.textContent = mkState.timeRemaining;
+      if (mkState.timeRemaining <= 0) {
+        finishMkTest();
+      }
+    }
+  }, 1000);
+}
+
+function handleMkChar(char) {
+  const currentWord = mkState.words[mkState.currentWordIdx];
+  if (!currentWord) return;
+
+  mkState.totalKeystrokes++;
+  const wordEl = document.getElementById(`mkWord_${mkState.currentWordIdx}`);
+
+  if (mkState.currentLetterIdx < currentWord.length) {
+    const expected = currentWord[mkState.currentLetterIdx];
+    const letterEl = document.getElementById(`mkLetter_${mkState.currentWordIdx}_${mkState.currentLetterIdx}`);
+
+    if (char === expected) {
+      if (letterEl) {
+        letterEl.classList.remove("incorrect");
+        letterEl.classList.add("correct");
+      }
+      mkState.correctKeystrokes++;
+      playAudioFeedback("click");
+    } else {
+      if (letterEl) {
+        letterEl.classList.remove("correct");
+        letterEl.classList.add("incorrect");
+      }
+      mkState.mistakesCount++;
+      recordMistypedKey(expected);
+      playAudioFeedback("error");
+    }
+    mkState.currentLetterIdx++;
+  } else {
+    // Extra letters typed beyond target word
+    if (mkState.currentLetterIdx < currentWord.length + 10) {
+      const extraSpan = document.createElement("span");
+      extraSpan.className = "mk-letter extra";
+      extraSpan.textContent = char;
+      if (wordEl) wordEl.appendChild(extraSpan);
+      mkState.extraLettersCount++;
+      mkState.mistakesCount++;
+      mkState.currentLetterIdx++;
+      playAudioFeedback("error");
+    }
+  }
+
+  updateMkCaret();
+}
+
+function handleMkBackspace(ctrl = false) {
+  if (mkState.currentLetterIdx > 0) {
+    const currentWord = mkState.words[mkState.currentWordIdx];
+    const wordEl = document.getElementById(`mkWord_${mkState.currentWordIdx}`);
+
+    if (mkState.currentLetterIdx > currentWord.length) {
+      // Remove extra letter
+      if (wordEl && wordEl.lastElementChild && wordEl.lastElementChild.classList.contains("extra")) {
+        wordEl.removeChild(wordEl.lastElementChild);
+      }
+    } else {
+      const letterEl = document.getElementById(`mkLetter_${mkState.currentWordIdx}_${mkState.currentLetterIdx - 1}`);
+      if (letterEl) {
+        letterEl.classList.remove("correct", "incorrect");
+      }
+    }
+    mkState.currentLetterIdx--;
+    updateMkCaret();
+    playAudioFeedback("click");
+  } else if (mkState.currentWordIdx > 0) {
+    // Jump back to previous word if it had errors
+    const prevWordIdx = mkState.currentWordIdx - 1;
+    const prevWord = mkState.words[prevWordIdx];
+    const prevWordEl = document.getElementById(`mkWord_${prevWordIdx}`);
+
+    if (prevWordEl && prevWordEl.classList.contains("has-error")) {
+      mkState.currentWordIdx = prevWordIdx;
+      mkState.currentLetterIdx = prevWordEl.children.length;
+      updateMkCaret();
+      playAudioFeedback("click");
+    }
+  }
+}
+
+function handleMkSpace() {
+  const currentWord = mkState.words[mkState.currentWordIdx];
+  if (!currentWord) return;
+
+  const wordEl = document.getElementById(`mkWord_${mkState.currentWordIdx}`);
+  let wordHasError = false;
+
+  if (wordEl) {
+    // Check if any letter in word is incorrect or untyped
+    for (let i = 0; i < currentWord.length; i++) {
+      const lEl = document.getElementById(`mkLetter_${mkState.currentWordIdx}_${i}`);
+      if (!lEl || !lEl.classList.contains("correct")) {
+        wordHasError = true;
+        if (lEl && !lEl.classList.contains("incorrect")) {
+          lEl.classList.add("incorrect");
+          mkState.mistakesCount++;
+        }
+      }
+    }
+    if (wordEl.querySelector(".extra")) wordHasError = true;
+
+    if (wordHasError) {
+      wordEl.classList.add("has-error");
+    }
+  }
+
+  mkState.currentWordIdx++;
+  mkState.currentLetterIdx = 0;
+
+  if (mkState.mode === "words") {
+    if (mkTimer) mkTimer.textContent = `${mkState.currentWordIdx} / ${mkState.words.length}`;
+    if (mkState.currentWordIdx >= mkState.words.length) {
+      finishMkTest();
+      return;
+    }
+  } else if (mkState.mode === "quote" || mkState.mode === "custom") {
+    if (mkState.currentWordIdx >= mkState.words.length) {
+      finishMkTest();
+      return;
+    }
+  }
+
+  updateMkCaret();
+  playAudioFeedback("click");
+}
+
+function finishMkTest() {
+  clearInterval(mkState.timerInterval);
+  mkState.running = false;
+  mkState.completed = true;
+
+  if (mkCaret) mkCaret.classList.remove("typing");
+  playAudioFeedback("success");
+
+  const elapsed = Math.max(mkState.elapsedSeconds, 1);
+  const elapsedMinutes = elapsed / 60;
+  const netWpm = Math.max(Math.round((mkState.correctKeystrokes / 5) / elapsedMinutes), 0);
+  const rawWpm = Math.max(Math.round((mkState.totalKeystrokes / 5) / elapsedMinutes), 0);
+  const accuracy = mkState.totalKeystrokes > 0 ? Math.round((mkState.correctKeystrokes / mkState.totalKeystrokes) * 100) : 100;
+
+  // Consistency
+  let consistency = 95;
+  if (mkState.wpmHistory.length > 3) {
+    const wpms = mkState.wpmHistory.map(h => h.wpm);
+    const mean = wpms.reduce((a, b) => a + b, 0) / wpms.length;
+    const variance = wpms.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / wpms.length;
+    const stdDev = Math.sqrt(variance);
+    consistency = Math.max(Math.round(100 - (stdDev / (mean || 1)) * 100), 50);
+  }
+
+  // Populate Results
+  const resWpm = document.getElementById("resWpm");
+  const resAcc = document.getElementById("resAcc");
+  const resRawWpm = document.getElementById("resRawWpm");
+  const resChars = document.getElementById("resChars");
+  const resConsistency = document.getElementById("resConsistency");
+  const resTime = document.getElementById("resTime");
+  const resTestType = document.getElementById("resTestType");
+
+  if (resWpm) resWpm.textContent = netWpm;
+  if (resAcc) resAcc.textContent = `${accuracy}%`;
+  if (resRawWpm) resRawWpm.textContent = rawWpm;
+  if (resChars) resChars.textContent = `${mkState.correctKeystrokes}/${mkState.mistakesCount}/${mkState.extraLettersCount}/0`;
+  if (resConsistency) resConsistency.textContent = `${consistency}%`;
+  if (resTime) resTime.textContent = `${elapsed}s`;
+  if (resTestType) resTestType.textContent = `${mkState.mode} ${mkState.subOption}`;
+
+  // Draw smooth curve canvas chart
+  drawMkChart();
+
+  // Save to statistics
+  saveTestResult({
+    date: Date.now(),
+    wpm: netWpm,
+    rawWpm: rawWpm,
+    accuracy: accuracy,
+    mode: `${mkState.mode} ${mkState.subOption}`,
+    time: elapsed
+  });
+
+  if (mkResultsCard) mkResultsCard.hidden = false;
+  if (mkTypingBox) mkTypingBox.style.display = "none";
+}
+
+function drawMkChart() {
+  const canvas = document.getElementById("mkChartCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+
+  const w = rect.width;
+  const h = rect.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const data = mkState.wpmHistory;
+  if (!data || data.length < 2) return;
+
+  const maxWpm = Math.max(...data.map(d => d.wpm), 40) + 10;
+  const padding = 24;
+
+  // Background Grid Lines
+  ctx.strokeStyle = "rgba(100, 102, 105, 0.2)";
+  ctx.lineWidth = 1;
+  for (let y = 0; y <= 4; y++) {
+    const yPos = padding + (y / 4) * (h - padding * 2);
+    ctx.beginPath();
+    ctx.moveTo(padding, yPos);
+    ctx.lineTo(w - padding, yPos);
+    ctx.stroke();
+  }
+
+  // Draw Smooth WPM Line
+  ctx.beginPath();
+  const getX = (i) => padding + (i / (data.length - 1)) * (w - padding * 2);
+  const getY = (val) => h - padding - (val / maxWpm) * (h - padding * 2);
+
+  ctx.moveTo(getX(0), getY(data[0].wpm));
+  for (let i = 1; i < data.length; i++) {
+    const prevX = getX(i - 1);
+    const prevY = getY(data[i - 1].wpm);
+    const curX = getX(i);
+    const curY = getY(data[i].wpm);
+    const midX = (prevX + curX) / 2;
+    ctx.quadraticCurveTo(prevX, prevY, midX, (prevY + curY) / 2);
+  }
+  ctx.lineTo(getX(data.length - 1), getY(data[data.length - 1].wpm));
+
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#e2b714";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Gradient fill under curve
+  ctx.lineTo(getX(data.length - 1), h - padding);
+  ctx.lineTo(getX(0), h - padding);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, padding, 0, h - padding);
+  grad.addColorStop(0, "rgba(226, 183, 20, 0.2)");
+  grad.addColorStop(1, "rgba(226, 183, 20, 0.0)");
+  ctx.fillStyle = grad;
+  ctx.fill();
+}
+
+function recordMistypedKey(char) {
+  if (!char || char.length !== 1) return;
+  const c = char.toLowerCase();
+  const current = JSON.parse(localStorage.getItem("rupesh_mistyped_keys") || "{}");
+  current[c] = (current[c] || 0) + 1;
+  localStorage.setItem("rupesh_mistyped_keys", JSON.stringify(current));
+}
+
+function saveTestResult(res) {
+  const history = JSON.parse(localStorage.getItem("rupesh_test_history") || "[]");
+  history.unshift(res);
+  if (history.length > 50) history.pop();
+  localStorage.setItem("rupesh_test_history", JSON.stringify(history));
+
+  // Best WPM
+  const currentBest = parseInt(localStorage.getItem("rupesh_best_wpm") || "0", 10);
+  if (res.wpm > currentBest) {
+    localStorage.setItem("rupesh_best_wpm", res.wpm);
+  }
+}
+
+/* ---------------------------------------------
+   D. TYPINGCLUB-STYLE ACADEMY
+   --------------------------------------------- */
+const ACADEMY_LESSONS = [
+  // Stage 1: Home Row Foundation
+  { id: 1, stage: 1, title: "Index Keys F & J", goal: "Anchor fingers on home row tactile bumps", keys: ["f", "j"], text: "ff jj fj jf ff jj fj jf fff jjj fjf jfj ff jj fj jf" },
+  { id: 2, stage: 1, title: "Middle Keys D & K", goal: "Coordinate left and right middle fingers", keys: ["d", "k", "f", "j"], text: "dd kk dk kd fd jk df kj ddf kkf djk fkd dk jd" },
+  { id: 3, stage: 1, title: "Ring Keys S & L", goal: "Strengthen left and right ring fingers", keys: ["s", "l"], text: "ss ll sl ls fs jl sf lj dsl kls slk dls fsl jls" },
+  { id: 4, stage: 1, title: "Pinky Keys A & ;", goal: "Master outer home row keys without shifting wrists", keys: ["a", ";"], text: "aa ;; a; ;a fa ;j da ;k sa ;l asdf ;lkj asdf ;lkj" },
+  { id: 5, stage: 1, title: "Space Bar Rhythm", goal: "Press space with thumb smoothly between words", keys: ["Space"], text: "a s d f j k l ; a s d f j k l ; as df jk l; asdf jkl;" },
+  { id: 6, stage: 1, title: "Home Row Words", goal: "Combine all 8 home row keys into real words", keys: ["a", "s", "d", "f", "j", "k", "l", ";"], text: "ask fall glad flask salad dads flags alfalfa salads flash" },
+
+  // Stage 2: Top Row Expansion
+  { id: 7, stage: 2, title: "Keys R & U", goal: "Reach index fingers upward to top row", keys: ["r", "u"], text: "rr uu ru ur fr ju rf uj fur jug jar run fur jug run" },
+  { id: 8, stage: 2, title: "Keys E & I", goal: "Reach middle fingers upward smoothly", keys: ["e", "i"], text: "ee ii ei ie de ki ed ik kid red fire ride life like" },
+  { id: 9, stage: 2, title: "Keys W & O", goal: "Reach ring fingers upward with light touch", keys: ["w", "o"], text: "ww oo wo ow sw lo ws ol slow wool work wood flow" },
+  { id: 10, stage: 2, title: "Keys Q & P", goal: "Reach pinky fingers upward to outer corners", keys: ["q", "p"], text: "qq pp qp pq aq ;p qa p; quit pour play keep jump" },
+  { id: 11, stage: 2, title: "Center Reach T & Y", goal: "Stretch index fingers inward to center top", keys: ["t", "y"], text: "tt yy ty yt ft jy tf yj they you your time year try" },
+  { id: 12, stage: 2, title: "Top Row Words", goal: "Combine top and home rows with speed", keys: ["r", "u", "e", "i", "w", "o", "t", "y"], text: "write quiet power pretty report utility poetry write pure" },
+
+  // Stage 3: Bottom Row Mastery
+  { id: 13, stage: 3, title: "Keys V & M", goal: "Reach index fingers downward to bottom row", keys: ["v", "m"], text: "vv mm vm mv fv jm vf mj view move make vary volume" },
+  { id: 14, stage: 3, title: "Keys C & ,", goal: "Reach middle fingers downward smoothly", keys: ["c", ","], text: "cc ,, c, ,c dc k, cd ,k care call clean come city" },
+  { id: 15, stage: 3, title: "Keys X & .", goal: "Reach ring fingers downward accurately", keys: ["x", "."], text: "xx .. x. .x sx l. xs .l text next fix box mix six" },
+  { id: 16, stage: 3, title: "Keys Z & /", goal: "Reach pinkies downward to bottom corners", keys: ["z", "/"], text: "zz // z/ /z az ;/ za /; zone zero maze prize size" },
+  { id: 17, stage: 3, title: "Bottom Center B & N", goal: "Reach index fingers downward inward", keys: ["b", "n"], text: "bb nn bn nb fb jn bf nj bean burn bank bone bond" },
+  { id: 18, stage: 3, title: "Alphabet Sentences", goal: "Type full sentences using all 26 letters", keys: ["Full A-Z"], text: "the quick brown fox jumps over the lazy dog repeatedly" },
+
+  // Stage 4: Capitalization, Numbers & Speed
+  { id: 19, stage: 4, title: "Shift & Capitals", goal: "Hold opposite Shift key with pinky while striking letter", keys: ["Shift"], text: "India Pune Maharashtra Mumbai London New York Delhi Tokyo" },
+  { id: 20, stage: 4, title: "Number Row 1–0", goal: "Reach upward to number row without looking", keys: ["1-0"], text: "1947 2026 100 250 500 1024 4096 8192 12345 67890" },
+  { id: 21, stage: 4, title: "Punctuation & Quotes", goal: "Incorporate quotes, hyphens, and question marks", keys: ["?", "!", "\"", "'", "-"], text: "\"Typing fast is good; typing accurately is paramount!\"" },
+  { id: 22, stage: 4, title: "Paragraph Flow", goal: "Maintain steady typing rhythm across multi-line text", keys: ["Flow"], text: "Consistent practice builds muscle memory that feels effortless." },
+  { id: 23, stage: 4, title: "40 WPM Speed Sprint", goal: "Benchmark your speed and push beyond 40 WPM", keys: ["Speed"], text: "Effective governance depends on transparency and public trust." },
+  { id: 24, stage: 4, title: "Graduation Benchmark", goal: "Comprehensive touch typing academy certification exam", keys: ["Graduation"], text: "Congratulations on completing the complete 24 lesson typing academy." }
+];
+
+const FINGER_MAP = {
+  // Left Pinky
+  "q": { name: "Left Pinky", key: "lp", hand: "left", fingerIdx: 0 },
+  "a": { name: "Left Pinky", key: "lp", hand: "left", fingerIdx: 0 },
+  "z": { name: "Left Pinky", key: "lp", hand: "left", fingerIdx: 0 },
+  "1": { name: "Left Pinky", key: "lp", hand: "left", fingerIdx: 0 },
+  "`": { name: "Left Pinky", key: "lp", hand: "left", fingerIdx: 0 },
+  // Left Ring
+  "w": { name: "Left Ring", key: "lr", hand: "left", fingerIdx: 1 },
+  "s": { name: "Left Ring", key: "lr", hand: "left", fingerIdx: 1 },
+  "x": { name: "Left Ring", key: "lr", hand: "left", fingerIdx: 1 },
+  "2": { name: "Left Ring", key: "lr", hand: "left", fingerIdx: 1 },
+  // Left Middle
+  "e": { name: "Left Middle", key: "lm", hand: "left", fingerIdx: 2 },
+  "d": { name: "Left Middle", key: "lm", hand: "left", fingerIdx: 2 },
+  "c": { name: "Left Middle", key: "lm", hand: "left", fingerIdx: 2 },
+  "3": { name: "Left Middle", key: "lm", hand: "left", fingerIdx: 2 },
+  // Left Index
+  "r": { name: "Left Index", key: "li", hand: "left", fingerIdx: 3 },
+  "f": { name: "Left Index", key: "li", hand: "left", fingerIdx: 3 },
+  "v": { name: "Left Index", key: "li", hand: "left", fingerIdx: 3 },
+  "t": { name: "Left Index", key: "li", hand: "left", fingerIdx: 3 },
+  "g": { name: "Left Index", key: "li", hand: "left", fingerIdx: 3 },
+  "b": { name: "Left Index", key: "li", hand: "left", fingerIdx: 3 },
+  "4": { name: "Left Index", key: "li", hand: "left", fingerIdx: 3 },
+  "5": { name: "Left Index", key: "li", hand: "left", fingerIdx: 3 },
+  // Space Thumbs
+  " ": { name: "Thumb", key: "th", hand: "left", fingerIdx: 4 },
+  // Right Index
+  "y": { name: "Right Index", key: "ri", hand: "right", fingerIdx: 1 },
+  "h": { name: "Right Index", key: "ri", hand: "right", fingerIdx: 1 },
+  "n": { name: "Right Index", key: "ri", hand: "right", fingerIdx: 1 },
+  "u": { name: "Right Index", key: "ri", hand: "right", fingerIdx: 1 },
+  "j": { name: "Right Index", key: "ri", hand: "right", fingerIdx: 1 },
+  "m": { name: "Right Index", key: "ri", hand: "right", fingerIdx: 1 },
+  "6": { name: "Right Index", key: "ri", hand: "right", fingerIdx: 1 },
+  "7": { name: "Right Index", key: "ri", hand: "right", fingerIdx: 1 },
+  // Right Middle
+  "i": { name: "Right Middle", key: "rm", hand: "right", fingerIdx: 2 },
+  "k": { name: "Right Middle", key: "rm", hand: "right", fingerIdx: 2 },
+  ",": { name: "Right Middle", key: "rm", hand: "right", fingerIdx: 2 },
+  "8": { name: "Right Middle", key: "rm", hand: "right", fingerIdx: 2 },
+  // Right Ring
+  "o": { name: "Right Ring", key: "rr", hand: "right", fingerIdx: 3 },
+  "l": { name: "Right Ring", key: "rr", hand: "right", fingerIdx: 3 },
+  ".": { name: "Right Ring", key: "rr", hand: "right", fingerIdx: 3 },
+  "9": { name: "Right Ring", key: "rr", hand: "right", fingerIdx: 3 },
+  // Right Pinky
+  "p": { name: "Right Pinky", key: "rp", hand: "right", fingerIdx: 4 },
+  ";": { name: "Right Pinky", key: "rp", hand: "right", fingerIdx: 4 },
+  "/": { name: "Right Pinky", key: "rp", hand: "right", fingerIdx: 4 },
+  "0": { name: "Right Pinky", key: "rp", hand: "right", fingerIdx: 4 },
+  "-": { name: "Right Pinky", key: "rp", hand: "right", fingerIdx: 4 },
+  "=": { name: "Right Pinky", key: "rp", hand: "right", fingerIdx: 4 },
+  "'": { name: "Right Pinky", key: "rp", hand: "right", fingerIdx: 4 }
+};
+
+let activeLesson = null;
+let lessonCharIdx = 0;
+let lessonStartTime = null;
+let lessonMistakes = 0;
+let lessonTotalKeystrokes = 0;
+
+function renderAcademyLessons(stageFilter = 1) {
+  const grid = document.getElementById("academyLessonsGrid");
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  const progress = JSON.parse(localStorage.getItem("rupesh_academy_progress") || "{}");
+  let totalStars = 0;
+  let completedCount = 0;
+
+  ACADEMY_LESSONS.forEach(l => {
+    const p = progress[l.id];
+    if (p) {
+      completedCount++;
+      totalStars += (p.stars || 0);
+    }
+  });
+
+  const progText = document.getElementById("academyProgressText");
+  const starsText = document.getElementById("academyStarsText");
+  const progBar = document.getElementById("academyProgressBar");
+  if (progText) progText.textContent = `${completedCount} / 24`;
+  if (starsText) starsText.textContent = `⭐ ${totalStars} / 120`;
+  if (progBar) progBar.style.width = `${Math.round((completedCount / 24) * 100)}%`;
+
+  const filtered = (stageFilter === "all") ? ACADEMY_LESSONS : ACADEMY_LESSONS.filter(l => l.stage === stageFilter);
+
+  filtered.forEach(l => {
+    const p = progress[l.id];
+    const stars = p ? "⭐".repeat(p.stars) + "☆".repeat(5 - p.stars) : "☆☆☆☆☆";
+    const bestWpm = p ? `${p.wpm} WPM` : "--";
+
+    const card = document.createElement("div");
+    card.className = "academy-lesson-card";
+    card.innerHTML = `
+      <div>
+        <div class="academy-card-top">
+          <span class="academy-card-num">LESSON ${l.id}</span>
+          <span class="academy-card-stars">${stars}</span>
+        </div>
+        <h4 class="academy-card-title">${l.title}</h4>
+        <p class="academy-card-desc">${l.goal}</p>
+        <div class="academy-card-keys" style="margin-top:10px;">
+          ${l.keys.map(k => `<span class="academy-key-tag">${k}</span>`).join("")}
+        </div>
+      </div>
+      <div class="academy-card-footer">
+        <span class="academy-card-pb">Best: <strong>${bestWpm}</strong></span>
+        <button class="btn btn-primary" onclick="launchLesson(${l.id})" style="padding:6px 14px; font-size:0.82rem;">
+          ${p ? "Practice" : "Start"}
+        </button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function filterAcademyStage(stage) {
+  document.querySelectorAll(".academy-stage-tab").forEach(tab => {
+    tab.classList.toggle("active", tab.dataset.stage == stage);
+  });
+  renderAcademyLessons(stage);
+}
+
+function launchLesson(id) {
+  const lesson = ACADEMY_LESSONS.find(l => l.id === id);
+  if (!lesson) return;
+
+  activeLesson = lesson;
+  lessonCharIdx = 0;
+  lessonStartTime = null;
+  lessonMistakes = 0;
+  lessonTotalKeystrokes = 0;
+
+  const player = document.getElementById("lessonPlayer");
+  const title = document.getElementById("playerLessonTitle");
+  const goal = document.getElementById("playerLessonGoal");
+  if (title) title.textContent = `Lesson ${lesson.id}: ${lesson.title}`;
+  if (goal) goal.textContent = `Goal: ${lesson.goal}`;
+
+  renderLessonStream();
+  updateLessonVisualizer();
+
+  if (player) {
+    player.hidden = false;
+    player.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const hiddenInput = document.getElementById("academyHiddenInput");
+  if (hiddenInput) {
+    hiddenInput.value = "";
+    hiddenInput.focus();
+  }
+}
+
+function closeLessonPlayer() {
+  const player = document.getElementById("lessonPlayer");
+  if (player) player.hidden = true;
+  activeLesson = null;
+  renderAcademyLessons();
+}
+
+function renderLessonStream() {
+  const box = document.getElementById("lessonStreamBox");
+  if (!box || !activeLesson) return;
+  box.innerHTML = "";
+
+  for (let i = 0; i < activeLesson.text.length; i++) {
+    const span = document.createElement("span");
+    span.className = "lesson-char";
+    span.id = `lChar_${i}`;
+    span.textContent = activeLesson.text[i];
+    if (i === lessonCharIdx) span.classList.add("current");
+    box.appendChild(span);
+  }
+}
+
+function updateLessonVisualizer() {
+  if (!activeLesson) return;
+  const targetChar = activeLesson.text[lessonCharIdx];
+  if (!targetChar) return;
+
+  const info = FINGER_MAP[targetChar.toLowerCase()] || { name: "Index", key: "li", hand: "left", fingerIdx: 3 };
+
+  const fingerName = document.getElementById("targetFingerName");
+  const keyName = document.getElementById("targetKeyName");
+  if (fingerName) fingerName.textContent = info.name;
+  if (keyName) keyName.textContent = targetChar === " " ? "Space" : targetChar.toUpperCase();
+
+  // Hands Diagram
+  document.querySelectorAll(".finger-pill").forEach(p => p.classList.remove("active"));
+  const handId = info.hand === "left" ? "leftHandFingers" : "rightHandFingers";
+  const handEl = document.getElementById(handId);
+  if (handEl && handEl.children[info.fingerIdx]) {
+    handEl.children[info.fingerIdx].classList.add("active");
+  }
+
+  // Virtual Keyboard Target Highlight
+  document.querySelectorAll(".vk-key").forEach(k => k.classList.remove("target"));
+  const lookupKey = targetChar.toLowerCase();
+  const vkKey = document.querySelector(`.vk-key[data-key="${lookupKey}"]`);
+  if (vkKey) {
+    vkKey.classList.add("target");
+  } else if (targetChar === " ") {
+    const spaceKey = document.querySelector(`.vk-key[data-key=" "]`);
+    if (spaceKey) spaceKey.classList.add("target");
+  }
+}
+
+const academyHiddenInput = document.getElementById("academyHiddenInput");
+if (academyHiddenInput) {
+  academyHiddenInput.addEventListener("keydown", (e) => {
+    if (!activeLesson) return;
+    if (e.key === "Tab") { e.preventDefault(); return; }
+
+    // Physical key highlight
+    const pressedKey = document.querySelector(`.vk-key[data-key="${e.key.toLowerCase()}"]`);
+    if (pressedKey) {
+      pressedKey.classList.add("pressed");
+      setTimeout(() => pressedKey.classList.remove("pressed"), 120);
+    }
+
+    if (!lessonStartTime && e.key.length === 1) {
+      lessonStartTime = Date.now();
+    }
+
+    if (e.key.length === 1) {
+      e.preventDefault();
+      lessonTotalKeystrokes++;
+      const expected = activeLesson.text[lessonCharIdx];
+      const charSpan = document.getElementById(`lChar_${lessonCharIdx}`);
+
+      if (e.key === expected) {
+        if (charSpan) {
+          charSpan.classList.remove("current", "incorrect");
+          charSpan.classList.add("correct");
+        }
+        playAudioFeedback("click");
+        lessonCharIdx++;
+
+        if (lessonCharIdx >= activeLesson.text.length) {
+          finishLesson();
+        } else {
+          const nextSpan = document.getElementById(`lChar_${lessonCharIdx}`);
+          if (nextSpan) nextSpan.classList.add("current");
+          updateLessonVisualizer();
+        }
+      } else {
+        if (charSpan) {
+          charSpan.classList.add("incorrect");
+        }
+        lessonMistakes++;
+        recordMistypedKey(expected);
+        playAudioFeedback("error");
+      }
+    }
+  });
+}
+
+function finishLesson() {
+  playAudioFeedback("success");
+  const elapsedMinutes = Math.max((Date.now() - lessonStartTime) / 60000, 0.05);
+  const wordsTyped = activeLesson.text.trim().split(/\s+/).length;
+  const wpm = Math.round(wordsTyped / elapsedMinutes);
+  const accuracy = Math.round(((lessonTotalKeystrokes - lessonMistakes) / (lessonTotalKeystrokes || 1)) * 100);
+
+  let stars = 1;
+  if (accuracy >= 98 && wpm >= 25) stars = 5;
+  else if (accuracy >= 95 && wpm >= 20) stars = 4;
+  else if (accuracy >= 90) stars = 3;
+  else if (accuracy >= 80) stars = 2;
+
+  // Save Progress
+  const progress = JSON.parse(localStorage.getItem("rupesh_academy_progress") || "{}");
+  const prev = progress[activeLesson.id];
+  progress[activeLesson.id] = {
+    stars: Math.max(stars, prev ? prev.stars : 0),
+    wpm: Math.max(wpm, prev ? prev.wpm : 0),
+    completedAt: Date.now()
+  };
+  localStorage.setItem("rupesh_academy_progress", JSON.stringify(progress));
+
+  // Show celebration dialog
+  alert(`🎉 Lesson Complete!\n\nRating: ${"⭐".repeat(stars)}\nSpeed: ${wpm} WPM\nAccuracy: ${accuracy}%\nErrors: ${lessonMistakes}`);
+  closeLessonPlayer();
+}
+
+/* ---------------------------------------------
+   E. WORD STORM ARCADE GAME
+   --------------------------------------------- */
+const gameWordsPool = [
+  "speed", "type", "quick", "flash", "storm", "power", "cloud",
+  "focus", "shift", "enter", "space", "click", "score", "blast",
+  "combo", "heart", "laser", "rocket", "stream", "action", "rhythm",
+  "target", "finger", "visual", "engine", "arcade", "matrix", "future"
+];
+
+let gameState = {
+  active: false,
+  paused: false,
+  score: 0,
+  combo: 1,
+  lives: 3,
+  wave: 1,
+  fallingWords: [], // { text: string, x: px, y: px, speed: px/frame, el: DOM }
+  animFrame: null,
+  spawnInterval: null
+};
+
+window.startGame = function() {
+  const overlay = document.getElementById("gameStartOverlay");
+  const modal = document.getElementById("gameOverModal");
+  const input = document.getElementById("gameInput");
+  const pauseBtn = document.getElementById("gamePauseBtn");
+  if (overlay) overlay.hidden = true;
+  if (modal) modal.hidden = true;
+  if (input) { input.disabled = false; input.value = ""; input.focus(); }
+  if (pauseBtn) pauseBtn.disabled = false;
+
+  gameState.active = true;
+  gameState.paused = false;
+  gameState.score = 0;
+  gameState.combo = 1;
+  gameState.lives = 3;
+  gameState.wave = 1;
+  gameState.fallingWords.forEach(w => { if (w.el && w.el.parentNode) w.el.parentNode.removeChild(w.el); });
+  gameState.fallingWords = [];
+
+  updateGameHUD();
+
+  clearInterval(gameState.spawnInterval);
+  gameState.spawnInterval = setInterval(spawnGameWord, 2000);
+  cancelAnimationFrame(gameState.animFrame);
+  gameLoop();
+};
+
+function spawnGameWord() {
+  if (!gameState.active || gameState.paused) return;
+  const arena = document.getElementById("gameArena");
+  if (!arena) return;
+
+  const text = gameWordsPool[Math.floor(Math.random() * gameWordsPool.length)];
+  const el = document.createElement("div");
+  el.className = "game-word-item";
+  el.textContent = text;
+
+  const maxX = arena.clientWidth - 100;
+  const x = Math.max(10, Math.floor(Math.random() * maxX));
+  const speed = 0.8 + gameState.wave * 0.2;
+
+  el.style.left = `${x}px`;
+  el.style.top = `0px`;
+  arena.appendChild(el);
+
+  gameState.fallingWords.push({ text, x, y: 0, speed, el });
+}
+
+function gameLoop() {
+  if (!gameState.active) return;
+
+  if (!gameState.paused) {
+    const arena = document.getElementById("gameArena");
+    const bottomLimit = arena ? arena.clientHeight - 40 : 380;
+
+    for (let i = gameState.fallingWords.length - 1; i >= 0; i--) {
+      const item = gameState.fallingWords[i];
+      item.y += item.speed;
+      item.el.style.top = `${item.y}px`;
+
+      if (item.y >= bottomLimit) {
+        // Lost life
+        if (item.el.parentNode) item.el.parentNode.removeChild(item.el);
+        gameState.fallingWords.splice(i, 1);
+        gameState.lives--;
+        gameState.combo = 1;
+        playAudioFeedback("error");
+        updateGameHUD();
+
+        if (gameState.lives <= 0) {
+          endGame();
+          return;
+        }
+      }
+    }
+  }
+
+  gameState.animFrame = requestAnimationFrame(gameLoop);
+}
+
+const gameInput = document.getElementById("gameInput");
+if (gameInput) {
+  gameInput.addEventListener("input", (e) => {
+    if (!gameState.active || gameState.paused) return;
+    const val = gameInput.value.trim().toLowerCase();
+
+    for (let i = 0; i < gameState.fallingWords.length; i++) {
+      const item = gameState.fallingWords[i];
+      if (item.text.toLowerCase() === val) {
+        // Hit!
+        if (item.el.parentNode) item.el.parentNode.removeChild(item.el);
+        gameState.fallingWords.splice(i, 1);
+
+        gameState.score += 10 * gameState.combo;
+        gameState.combo = Math.min(gameState.combo + 1, 4);
+        if (gameState.score % 100 === 0) gameState.wave++;
+
+        gameInput.value = "";
+        playAudioFeedback("click");
+        updateGameHUD();
+        return;
+      }
+    }
+  });
+}
+
+function updateGameHUD() {
+  const s = document.getElementById("gameScore");
+  const c = document.getElementById("gameCombo");
+  const l = document.getElementById("gameLives");
+  const w = document.getElementById("gameWave");
+  if (s) s.textContent = gameState.score;
+  if (c) c.textContent = `x${gameState.combo}`;
+  if (l) l.textContent = "❤️".repeat(Math.max(gameState.lives, 0));
+  if (w) w.textContent = gameState.wave;
+}
+
+function endGame() {
+  gameState.active = false;
+  clearInterval(gameState.spawnInterval);
+  cancelAnimationFrame(gameState.animFrame);
+
+  const highScore = Math.max(gameState.score, parseInt(localStorage.getItem("rupesh_game_highscore") || "0", 10));
+  localStorage.setItem("rupesh_game_highscore", highScore);
+
+  const modal = document.getElementById("gameOverModal");
+  const finalScore = document.getElementById("gameFinalScore");
+  const hsEl = document.getElementById("gameHighScore");
+  if (finalScore) finalScore.textContent = gameState.score;
+  if (hsEl) hsEl.textContent = highScore;
+  if (modal) modal.hidden = false;
+}
+
+window.closeGameOverModal = function() {
+  const modal = document.getElementById("gameOverModal");
+  if (modal) modal.hidden = true;
+  const overlay = document.getElementById("gameStartOverlay");
+  if (overlay) overlay.hidden = false;
+};
+
+window.togglePauseGame = function() {
+  gameState.paused = !gameState.paused;
+  const btn = document.getElementById("gamePauseBtn");
+  if (btn) btn.textContent = gameState.paused ? "Resume" : "Pause";
+};
+
+/* ---------------------------------------------
+   F. GCC-TBC PASSAGE SIMULATOR ON HOME
+   --------------------------------------------- */
+let tbcState = {
+  speed: 30,
+  passage: "",
+  startTime: null,
+  timerInterval: null,
+  seconds: 600
+};
+
+window.startGcctbcSim = function(speed) {
+  tbcState.speed = speed;
+  const title = document.getElementById("gcctbcSimTitle");
+  if (title) title.textContent = `📋 Official Passage Simulator (${speed} WPM · 10 Mins)`;
+  resetGcctbcSim();
+  const ws = document.getElementById("gcctbcWorkspace");
+  if (ws) ws.scrollIntoView({ behavior: "smooth" });
+};
+
+window.resetGcctbcSim = function() {
+  clearInterval(tbcState.timerInterval);
+  tbcState.timerInterval = null;
+  tbcState.startTime = null;
+  tbcState.seconds = 600;
+
+  const tTime = document.getElementById("tbcTime");
+  const tWpm = document.getElementById("tbcWpm");
+  const tAcc = document.getElementById("tbcAcc");
+  const input = document.getElementById("tbcInput");
+  const res = document.getElementById("tbcResultsCard");
+
+  if (tTime) tTime.textContent = "10:00";
+  if (tWpm) tWpm.textContent = "0 WPM";
+  if (tAcc) tAcc.textContent = "100%";
+  if (input) { input.value = ""; input.disabled = false; input.focus(); }
+  if (res) res.hidden = true;
+
+  // Pick passage
+  const pool = PASSAGES || [];
+  tbcState.passage = pool[Math.floor(Math.random() * pool.length)] || "Good communication is the foundation of every successful organization.";
+  const pBox = document.getElementById("tbcPassage");
+  if (pBox) pBox.textContent = tbcState.passage;
+};
+
+const tbcInput = document.getElementById("tbcInput");
+if (tbcInput) {
+  tbcInput.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const s = tbcInput.selectionStart;
+      tbcInput.value = tbcInput.value.substring(0, s) + "    " + tbcInput.value.substring(tbcInput.selectionEnd);
+      tbcInput.selectionStart = tbcInput.selectionEnd = s + 4;
+    }
+  });
+
+  tbcInput.addEventListener("input", () => {
+    if (!tbcState.startTime) {
+      tbcState.startTime = Date.now();
+      tbcState.timerInterval = setInterval(() => {
+        tbcState.seconds--;
+        const m = Math.floor(tbcState.seconds / 60).toString().padStart(2, "0");
+        const s = Math.floor(tbcState.seconds % 60).toString().padStart(2, "0");
+        const tEl = document.getElementById("tbcTime");
+        if (tEl) tEl.textContent = `${m}:${s}`;
+        if (tbcState.seconds <= 0) {
+          submitGcctbcSim();
+        }
+      }, 1000);
+    }
+
+    const elapsed = Math.max((Date.now() - tbcState.startTime) / 60000, 0.01);
+    const words = tbcInput.value.trim().split(/\s+/).filter(Boolean).length;
+    const wpm = Math.round(words / elapsed);
+    const wEl = document.getElementById("tbcWpm");
+    if (wEl) wEl.textContent = `${wpm} WPM`;
+  });
+}
+
+window.submitGcctbcSim = function() {
+  clearInterval(tbcState.timerInterval);
+  if (tbcInput) tbcInput.disabled = true;
+
+  const typed = tbcInput ? tbcInput.value : "";
+  const target = tbcState.passage;
+  const typedWords = typed.trim().split(/\s+/).filter(Boolean);
+  const targetWords = target.trim().split(/\s+/).filter(Boolean);
+
+  let mistakes = 0;
+  for (let i = 0; i < typedWords.length; i++) {
+    if (i >= targetWords.length || typedWords[i] !== targetWords[i]) {
+      mistakes++;
+    }
+  }
+
+  const marks = Math.max(40 - mistakes, 0);
+  const passed = marks >= 16;
+
+  const scoreMarks = document.getElementById("tbcScoreMarks");
+  const passBadge = document.getElementById("tbcPassBadge");
+  const resWords = document.getElementById("tbcResWords");
+  const resMistakes = document.getElementById("tbcResMistakes");
+  const card = document.getElementById("tbcResultsCard");
+
+  if (scoreMarks) scoreMarks.textContent = `${marks}/40`;
+  if (passBadge) {
+    passBadge.textContent = passed ? "PASS" : "FAIL";
+    passBadge.className = passed ? "mcq-pass-banner pass" : "mcq-pass-banner fail";
+  }
+  if (resWords) resWords.textContent = typedWords.length;
+  if (resMistakes) resMistakes.textContent = mistakes;
+  if (card) card.hidden = false;
+};
+
+/* ---------------------------------------------
+   G. MCQ ON-PAGE ENGINE
+   --------------------------------------------- */
+let inMcqQuestions = [];
+let inMcqIdx = 0;
+let inMcqScore = 0;
+let inMcqCurrentQuestions = [];
+
+window.resetInMcq = function() {
+  const pool = MCQ_BANK_30 || [];
+  inMcqQuestions = [...pool].sort(() => Math.random() - 0.5).slice(0, 25);
+  inMcqCurrentQuestions = inMcqQuestions;
+  inMcqIdx = 0;
+  inMcqScore = 0;
+  renderInMcqQuestion();
+};
+
+function renderInMcqQuestion() {
+  const q = inMcqQuestions[inMcqIdx];
+  if (!q) return;
+
+  const label = document.getElementById("inMcqLabel");
+  const text = document.getElementById("inMcqQuestionText");
+  const opts = document.getElementById("inMcqOptions");
+  const score = document.getElementById("inMcqScore");
+  const prevBtn = document.getElementById("inMcqPrevBtn");
+  const nextBtn = document.getElementById("inMcqNextBtn");
+  const feedback = document.getElementById("inMcqFeedback");
+
+  if (label) label.textContent = `Question ${inMcqIdx + 1} of 25`;
+  if (text) text.textContent = q.question;
+  if (score) score.textContent = `${inMcqScore}/25`;
+  if (feedback) feedback.hidden = true;
+  if (prevBtn) prevBtn.disabled = inMcqIdx === 0;
+  if (nextBtn) nextBtn.disabled = true;
+
+  if (opts) {
+    opts.innerHTML = "";
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "mcq-option-btn";
+      btn.innerHTML = `<strong>${String.fromCharCode(65 + idx)}.</strong> ${opt}`;
+      btn.onclick = () => {
+        document.querySelectorAll("#inMcqOptions .mcq-option-btn").forEach(b => b.disabled = true);
+        if (idx === q.answer) {
+          btn.classList.add("correct");
+          inMcqScore++;
+          if (score) score.textContent = `${inMcqScore}/25`;
+          playAudioFeedback("click");
+        } else {
+          btn.classList.add("incorrect");
+          playAudioFeedback("error");
+          const correctBtn = opts.children[q.answer];
+          if (correctBtn) correctBtn.classList.add("correct");
+        }
+        if (nextBtn) nextBtn.disabled = false;
+      };
+      opts.appendChild(btn);
+    });
+  }
+}
+
+window.nextInMcq = function() {
+  if (inMcqIdx < inMcqQuestions.length - 1) {
+    inMcqIdx++;
+    renderInMcqQuestion();
+  } else {
+    alert(`MCQ Exam Completed!\nFinal Score: ${inMcqScore} / 25 (${Math.round((inMcqScore/25)*100)}%)\nPassing Status: ${inMcqScore >= 10 ? 'PASSED' : 'FAILED'}`);
+  }
+};
+
+window.prevInMcq = function() {
+  if (inMcqIdx > 0) {
+    inMcqIdx--;
+    renderInMcqQuestion();
+  }
+};
+
+/* ---------------------------------------------
+   H. EMAIL PRACTICE ON-PAGE
+   --------------------------------------------- */
+let inEmailActiveSample = null;
+
+window.resetInEmail = function() {
+  const samples = EMAIL_SAMPLES || [];
+  inEmailActiveSample = samples[Math.floor(Math.random() * samples.length)] || {
+    topic: "Request for Office Equipment",
+    description: "You are the administrative officer. Draft a formal email requesting catalog and price list.",
+    to: "sales@techcorp.in",
+    subject: "Inquiry Regarding Office Equipment Supply",
+    attachment: "Technical_Specs.pdf"
+  };
+
+  const topic = document.getElementById("inEmailPromptTopic");
+  const desc = document.getElementById("inEmailPromptDesc");
+  const to = document.getElementById("inEmailTargetTo");
+  const att = document.getElementById("inEmailTargetAtt");
+
+  if (topic) topic.textContent = inEmailActiveSample.topic;
+  if (desc) desc.textContent = inEmailActiveSample.description;
+  if (to) to.textContent = inEmailActiveSample.to;
+  if (att) att.textContent = inEmailActiveSample.attachment;
+
+  const dTo = document.getElementById("inEmailDraftTo");
+  const dSub = document.getElementById("inEmailDraftSubject");
+  const dAtt = document.getElementById("inEmailDraftAtt");
+  const dBody = document.getElementById("inEmailDraftBody");
+  if (dTo) dTo.value = "";
+  if (dSub) dSub.value = "";
+  if (dAtt) dAtt.value = "";
+  if (dBody) dBody.value = "";
+};
+
+window.submitInEmail = function() {
+  const dTo = document.getElementById("inEmailDraftTo")?.value.trim().toLowerCase() || "";
+  const dSub = document.getElementById("inEmailDraftSubject")?.value.trim().toLowerCase() || "";
+  const dAtt = document.getElementById("inEmailDraftAtt")?.value.trim() || "";
+  const dBody = document.getElementById("inEmailDraftBody")?.value.trim() || "";
+
+  let marks = 0;
+  if (dTo === inEmailActiveSample.to.toLowerCase()) marks += 1;
+  if (dSub.length >= 8) marks += 1;
+  if (dAtt === inEmailActiveSample.attachment) marks += 1;
+  if (dBody.length >= 30) marks += 2;
+
+  alert(`✉️ Email Evaluation Result:\n\nMarks Awarded: ${marks} / 5 Marks\nPassing Threshold: 2/5 (40%)\nStatus: ${marks >= 2 ? 'PASS' : 'FAIL'}`);
+};
+
+/* ---------------------------------------------
+   I. STATS & ANALYTICS DASHBOARD
+   --------------------------------------------- */
+function renderStatsDashboard() {
+  const history = JSON.parse(localStorage.getItem("rupesh_test_history") || "[]");
+  const totalTests = history.length;
+  const bestWpm = localStorage.getItem("rupesh_best_wpm") || "0";
+  const progress = JSON.parse(localStorage.getItem("rupesh_academy_progress") || "{}");
+
+  let totalStars = 0;
+  Object.values(progress).forEach(p => totalStars += (p.stars || 0));
+
+  let totalSecs = history.reduce((sum, h) => sum + (h.time || 30), 0);
+  let totalAcc = history.length ? Math.round(history.reduce((sum, h) => sum + (h.accuracy || 100), 0) / history.length) : 100;
+
+  const tEl = document.getElementById("statTotalTests");
+  const timeEl = document.getElementById("statTotalTime");
+  const bEl = document.getElementById("statBestWpm");
+  const aEl = document.getElementById("statAvgAcc");
+  const sEl = document.getElementById("statAcademyStars");
+
+  if (tEl) tEl.textContent = totalTests;
+  if (timeEl) timeEl.textContent = `${Math.round(totalSecs / 60)}m`;
+  if (bEl) bEl.textContent = `${bestWpm} WPM`;
+  if (aEl) aEl.textContent = `${totalAcc}%`;
+  if (sEl) sEl.textContent = `${totalStars} ⭐`;
+
+  // Draw History Chart
+  drawStatsHistoryChart(history);
+
+  // Render Mistyped Keys
+  renderMistypedKeys();
+}
+
+function drawStatsHistoryChart(history) {
+  const canvas = document.getElementById("statsHistoryChart");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const slice = history.slice(0, 15).reverse();
+  if (slice.length < 2) {
+    ctx.fillStyle = "rgba(100, 102, 105, 0.7)";
+    ctx.font = "14px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Complete at least 2 typing tests to view your progression curve.", w / 2, h / 2);
+    return;
+  }
+
+  const maxWpm = Math.max(...slice.map(d => d.wpm), 60) + 10;
+  const padding = 24;
+
+  ctx.beginPath();
+  const getX = (i) => padding + (i / (slice.length - 1)) * (w - padding * 2);
+  const getY = (val) => h - padding - (val / maxWpm) * (h - padding * 2);
+
+  ctx.moveTo(getX(0), getY(slice[0].wpm));
+  for (let i = 1; i < slice.length; i++) {
+    ctx.lineTo(getX(i), getY(slice[i].wpm));
+  }
+
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#e2b714";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Dots
+  slice.forEach((pt, i) => {
+    ctx.beginPath();
+    ctx.arc(getX(i), getY(pt.wpm), 4, 0, Math.PI * 2);
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.fill();
+  });
+}
+
+function renderMistypedKeys() {
+  const container = document.getElementById("weakKeysContainer");
+  if (!container) return;
+
+  const mistakes = JSON.parse(localStorage.getItem("rupesh_mistyped_keys") || "{}");
+  const entries = Object.entries(mistakes).sort((a, b) => b[1] - a[1]);
+
+  if (!entries.length) {
+    container.innerHTML = `<span style="font-size:0.85rem; color:var(--ink-dim);">No error data recorded yet. Complete typing tests to identify troublesome keys!</span>`;
+    return;
+  }
+
+  container.innerHTML = "";
+  entries.slice(0, 8).forEach(([char, count]) => {
+    const badge = document.createElement("div");
+    badge.className = "weak-key-badge";
+    badge.innerHTML = `
+      <span class="weak-key-char">${char === " " ? "Space" : char.toUpperCase()}</span>
+      <span class="weak-key-count">${count} typos</span>
+    `;
+    container.appendChild(badge);
+  });
+}
+
+window.generateWeakKeyDrill = function() {
+  const mistakes = JSON.parse(localStorage.getItem("rupesh_mistyped_keys") || "{}");
+  const topKeys = Object.keys(mistakes).slice(0, 4);
+
+  if (!topKeys.length) {
+    alert("Take a speed test first to record mistyped keystrokes!");
+    return;
+  }
+
+  // Generate words rich in those keys
+  const targetWords = COMMON_WORDS.filter(w => topKeys.some(k => w.includes(k)));
+  const customDrill = targetWords.slice(0, 30).join(" ");
+
+  mkState.customText = customDrill;
+  setMkMode("custom");
+  appNav("test");
+};
+
+window.resetUserStats = function() {
+  if (confirm("Are you sure you want to reset all test history and academy stars?")) {
+    localStorage.removeItem("rupesh_test_history");
+    localStorage.removeItem("rupesh_academy_progress");
+    localStorage.removeItem("rupesh_mistyped_keys");
+    localStorage.removeItem("rupesh_best_wpm");
+    localStorage.removeItem("rupesh_game_highscore");
+    renderStatsDashboard();
+    renderAcademyLessons();
+    alert("All statistics and progress have been reset.");
+  }
+};
+
+/* ---------------------------------------------
+   J. CUSTOM MODAL CONTROLS
+   --------------------------------------------- */
+window.openCustomModal = function() {
+  const m = document.getElementById("customTextModal");
+  if (m) m.hidden = false;
+};
+
+window.closeCustomModal = function() {
+  const m = document.getElementById("customTextModal");
+  if (m) m.hidden = true;
+};
+
+window.applyCustomText = function() {
+  const txt = document.getElementById("customTextInput")?.value.trim();
+  if (!txt) return;
+  mkState.customText = txt;
+  closeCustomModal();
+  setMkMode("custom");
+};
+
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", () => {
+  renderMkSubOptions();
+  restartMkTest();
+  renderAcademyLessons();
+});
+
 
