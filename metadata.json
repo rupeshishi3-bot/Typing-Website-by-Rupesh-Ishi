@@ -1,6 +1,6 @@
 {
   "name": "Typing Website by Rupesh Ishi",
-  "description": "Free online typing speed test with live WPM tracking, GCC-TBC typing exam prep, MCQ practice, and email practice.",
+  "description": "A minimalist, customizable Monkeytype-inspired typing test platform with live WPM/accuracy tracking, smooth caret, multiple modes, themes, and personal statistics.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

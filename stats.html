@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="serika-dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Statistics | Rupesh Ishi Typing</title>
+  <meta name="description" content="View your typing speed test history, progression curves, all-time personal bests, and mistyped keys analytics.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23323437'/%3E%3Cpath d='M25 40h50M25 50h35M25 60h45' stroke='%23e2b714' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=JetBrains+Mono:wght@400;500;700&family=Roboto+Mono:wght@400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+
+  <style>
+    .stats-container {
+      width: 100%;
+      max-width: 950px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      padding-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      color: var(--sub-color);
+      font-weight: 600;
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+
+    .overview-card {
+      background-color: var(--sub-alt-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .overview-label {
+      font-size: 0.8rem;
+      color: var(--sub-color);
+    }
+
+    .overview-val {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--main-color);
+    }
+
+    .pb-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .pb-card {
+      background-color: var(--sub-alt-color);
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .pb-mode {
+      font-size: 0.75rem;
+      color: var(--sub-color);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .pb-wpm {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0.2rem 0;
+    }
+
+    .pb-acc {
+      font-size: 0.75rem;
+      color: var(--sub-color);
+    }
+
+    .history-table-box {
+      width: 100%;
+      overflow-x: auto;
+      background-color: var(--sub-alt-color);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    table.history-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    table.history-table th {
+      padding: 0.85rem 1rem;
+      color: var(--sub-color);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    table.history-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-color);
+    }
+
+    table.history-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .weak-keys-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .key-badge-card {
+      background-color: var(--sub-alt-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.5rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+    }
+
+    .key-badge-char {
+      font-weight: 700;
+      color: var(--main-color);
+      background-color: var(--bg-color);
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+    }
+
+    .notice-box {
+      background-color: var(--sub-alt-color);
+      border-left: 3px solid var(--main-color);
+      border-radius: 4px;
+      padding: 0.85rem 1rem;
+      font-size: 0.82rem;
+      color: var(--sub-color);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="brand">
+      <a href="index.html" style="display:flex; align-items:center; gap:0.75rem;">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
+          <line x1="6" y1="8" x2="6" y2="8"/>
+          <line x1="10" y1="8" x2="10" y2="8"/>
+          <line x1="14" y1="8" x2="14" y2="8"/>
+          <line x1="18" y1="8" x2="18" y2="8"/>
+          <line x1="6" y1="12" x2="6" y2="12"/>
+          <line x1="18" y1="12" x2="18" y2="12"/>
+          <line x1="7" y1="16" x2="17" y2="16"/>
+        </svg>
+        <span class="brand-title">rupesh <span>typing</span></span>
+      </a>
+    </div>
+
+    <nav class="nav-links">
+      <a class="nav-link" href="index.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        test
+      </a>
+      <a class="nav-link active" href="stats.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        stats
+      </a>
+      <a class="nav-link" href="settings.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        settings
+      </a>
+    </nav>
+  </header>
+
+  <!-- Main Stats Content -->
+  <main class="main-content">
+    <div class="stats-container">
+
+      <!-- Local Storage Notice -->
+      <div class="notice-box">
+        🔒 <strong>Local Offline Storage:</strong> Your typing history and personal records are saved directly in your current browser's localStorage. No data is uploaded or transmitted to external servers.
+      </div>
+
+      <!-- Overview Stats -->
+      <div>
+        <h2 class="section-title">overview</h2>
+        <div class="overview-grid">
+          <div class="overview-card">
+            <span class="overview-label">tests completed</span>
+            <span class="overview-val" id="statTests">0</span>
+          </div>
+          <div class="overview-card">
+            <span class="overview-label">time typing</span>
+            <span class="overview-val" id="statTime">0m</span>
+          </div>
+          <div class="overview-card">
+            <span class="overview-label">highest wpm</span>
+            <span class="overview-val" id="statBestWpm">0</span>
+          </div>
+          <div class="overview-card">
+            <span class="overview-label">average wpm</span>
+            <span class="overview-val" id="statAvgWpm">0</span>
+          </div>
+          <div class="overview-card">
+            <span class="overview-label">average accuracy</span>
+            <span class="overview-val" id="statAvgAcc">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Personal Bests Grid -->
+      <div>
+        <h2 class="section-title">personal records</h2>
+        <div class="pb-grid" id="pbContainer">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+
+      <!-- WPM Progression Trend Chart -->
+      <div>
+        <h2 class="section-title">wpm progression (recent tests)</h2>
+        <div class="results-chart-box" style="height:220px;">
+          <canvas class="results-chart-canvas" id="historyTrendCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Mistyped Keys Heat-Map -->
+      <div>
+        <h2 class="section-title">frequent mistyped keys</h2>
+        <div class="weak-keys-grid" id="weakKeysContainer">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+
+      <!-- History Table -->
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+          <h2 class="section-title" style="margin:0;">test history</h2>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn-secondary" style="font-size:0.75rem; padding:0.35rem 0.75rem;" onclick="exportHistory()">export json</button>
+            <button class="btn-secondary" style="font-size:0.75rem; padding:0.35rem 0.75rem; color:var(--error-color);" onclick="clearHistory()">clear history</button>
+          </div>
+        </div>
+        <div class="history-table-box">
+          <table class="history-table" id="historyTable">
+            <thead>
+              <tr>
+                <th>wpm</th>
+                <th>raw</th>
+                <th>acc</th>
+                <th>consistency</th>
+                <th>mode</th>
+                <th>date</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <!-- Injected dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-left">
+      <a class="footer-link" href="index.html">&larr; back to test</a>
+      <a class="footer-link" href="settings.html">customization</a>
+    </div>
+    <div class="footer-right">
+      <span style="opacity:0.6;">rupesh ishi typing &bull; static</span>
+    </div>
+  </footer>
+
+  <script src="js/settings.js"></script>
+  <script src="js/statistics.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      window.Settings.init();
+      renderStatsPage();
+    });
+
+    function renderStatsPage() {
+      const summary = window.Statistics.getSummaryStats();
+      const history = window.Statistics.getHistory();
+      const pbs = window.Statistics.getPersonalBests();
+      const mistypes = window.Statistics.getMistypes();
+
+      // Summary
+      document.getElementById('statTests').textContent = summary.totalTests;
+      document.getElementById('statTime').textContent = `${Math.round(summary.totalTime / 60)}m`;
+      document.getElementById('statBestWpm').textContent = summary.bestWpm;
+      document.getElementById('statAvgWpm').textContent = summary.avgWpm;
+      document.getElementById('statAvgAcc').textContent = `${summary.avgAcc}%`;
+
+      // Personal Bests
+      const pbContainer = document.getElementById('pbContainer');
+      pbContainer.innerHTML = '';
+      const standardModes = ['time 15', 'time 30', 'time 60', 'time 120', 'words 10', 'words 25', 'words 50', 'words 100'];
+
+      standardModes.forEach(modeKey => {
+        const pb = pbs[modeKey];
+        const card = document.createElement('div');
+        card.className = 'pb-card';
+        card.innerHTML = `
+          <div class="pb-mode">${modeKey}</div>
+          <div class="pb-wpm">${pb ? pb.wpm : '-'}</div>
+          <div class="pb-acc">${pb ? `${pb.acc}% acc` : 'no test yet'}</div>
+        `;
+        pbContainer.appendChild(card);
+      });
+
+      // Mistyped Keys
+      const weakKeysContainer = document.getElementById('weakKeysContainer');
+      weakKeysContainer.innerHTML = '';
+      const mistypeEntries = Object.entries(mistypes).sort((a, b) => b[1] - a[1]);
+      if (mistypeEntries.length === 0) {
+        weakKeysContainer.innerHTML = '<span style="color:var(--sub-color); font-size:0.85rem;">No mistyped keys recorded yet. Complete typing tests to view typo diagnostics.</span>';
+      } else {
+        mistypeEntries.slice(0, 10).forEach(([char, count]) => {
+          const badge = document.createElement('div');
+          badge.className = 'key-badge-card';
+          badge.innerHTML = `
+            <span class="key-badge-char">${char === ' ' ? '␣' : char.toUpperCase()}</span>
+            <span>${count} errors</span>
+          `;
+          weakKeysContainer.appendChild(badge);
+        });
+      }
+
+      // History Table
+      const tableBody = document.getElementById('historyTableBody');
+      tableBody.innerHTML = '';
+      if (history.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--sub-color); padding:1.5rem;">No completed tests yet. Start typing on the home page!</td></tr>';
+      } else {
+        history.slice(0, 50).forEach(item => {
+          const tr = document.createElement('tr');
+          const d = new Date(item.date);
+          const dateStr = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+          tr.innerHTML = `
+            <td><strong style="color:var(--main-color);">${item.wpm}</strong></td>
+            <td>${item.rawWpm || item.wpm}</td>
+            <td>${item.acc}%</td>
+            <td>${item.consistency || 100}%</td>
+            <td>${item.mode}</td>
+            <td style="color:var(--sub-color); font-size:0.75rem;">${dateStr}</td>
+          `;
+          tableBody.appendChild(tr);
+        });
+      }
+
+      // Draw Trend Chart
+      setTimeout(() => {
+        if (history.length >= 2) {
+          const slice = history.slice(0, 20).reverse().map(h => ({
+            wpm: h.wpm,
+            rawWpm: h.rawWpm || h.wpm,
+            errors: 0
+          }));
+          window.Statistics.drawWpmChart('historyTrendCanvas', slice);
+        } else {
+          const canvas = document.getElementById('historyTrendCanvas');
+          if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = "rgba(100, 102, 105, 0.7)";
+            ctx.font = "14px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText("Complete at least 2 tests to view your progression curve.", canvas.width / 2, canvas.height / 2);
+          }
+        }
+      }, 50);
+    }
+
+    function exportHistory() {
+      const data = window.Statistics.getHistory();
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `monkeytype_history_${Date.now()}.json`);
+      dlAnchor.click();
+    }
+
+    function clearHistory() {
+      if (confirm("Are you sure you want to permanently clear all test history and personal bests?")) {
+        window.Statistics.clearAllData();
+        renderStatsPage();
+      }
+    }
+  </script>
+</body>
+</html>

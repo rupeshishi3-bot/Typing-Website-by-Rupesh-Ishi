@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="serika-dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings & Customization | Rupesh Ishi Typing</title>
+  <meta name="description" content="Customize your typing experience: themes, fonts, smooth caret animations, audio feedback, and test behavior.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23323437'/%3E%3Cpath d='M25 40h50M25 50h35M25 60h45' stroke='%23e2b714' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=JetBrains+Mono:wght@400;500;700&family=Roboto+Mono:wght@400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+
+  <style>
+    .settings-container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      padding-bottom: 3rem;
+    }
+
+    .settings-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .settings-section-header {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+
+    .settings-section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-color);
+    }
+
+    .settings-section-sub {
+      font-size: 0.8rem;
+      color: var(--sub-color);
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(100, 102, 105, 0.12);
+    }
+
+    .setting-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      max-width: 65%;
+    }
+
+    .setting-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .setting-desc {
+      font-size: 0.78rem;
+      color: var(--sub-color);
+    }
+
+    .setting-control {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Switch Component */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: var(--sub-alt-color);
+      border: 1px solid var(--border-color);
+      transition: .2s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--sub-color);
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--main-color);
+      border-color: var(--main-color);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+      background-color: var(--bg-color);
+    }
+
+    /* Select and Inputs */
+    select.setting-select {
+      background-color: var(--sub-alt-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-color);
+      padding: 0.4rem 0.8rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    select.setting-select:focus {
+      border-color: var(--main-color);
+    }
+
+    /* Button Group Selector */
+    .btn-group {
+      display: inline-flex;
+      background-color: var(--sub-alt-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .btn-group button {
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: var(--sub-color);
+    }
+
+    .btn-group button.active {
+      background-color: var(--bg-color);
+      color: var(--main-color);
+      font-weight: 700;
+    }
+
+    /* Theme Swatch Grid */
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .theme-card {
+      border-radius: 6px;
+      padding: 0.75rem;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: transform 0.12s ease, border-color 0.12s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .theme-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .theme-card.active {
+      border-color: var(--main-color);
+    }
+
+    .theme-preview-dots {
+      display: flex;
+      gap: 0.35rem;
+      margin-top: 0.2rem;
+    }
+
+    .theme-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+
+    /* Live Preview Box */
+    .preview-box {
+      background-color: var(--sub-alt-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.35rem;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="brand">
+      <a href="index.html" style="display:flex; align-items:center; gap:0.75rem;">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
+          <line x1="6" y1="8" x2="6" y2="8"/>
+          <line x1="10" y1="8" x2="10" y2="8"/>
+          <line x1="14" y1="8" x2="14" y2="8"/>
+          <line x1="18" y1="8" x2="18" y2="8"/>
+          <line x1="6" y1="12" x2="6" y2="12"/>
+          <line x1="18" y1="12" x2="18" y2="12"/>
+          <line x1="7" y1="16" x2="17" y2="16"/>
+        </svg>
+        <span class="brand-title">rupesh <span>typing</span></span>
+      </a>
+    </div>
+
+    <nav class="nav-links">
+      <a class="nav-link" href="index.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        test
+      </a>
+      <a class="nav-link" href="stats.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        stats
+      </a>
+      <a class="nav-link active" href="settings.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        settings
+      </a>
+    </nav>
+  </header>
+
+  <!-- Settings Main View -->
+  <main class="main-content">
+    <div class="settings-container">
+
+      <!-- Live Typing Preview -->
+      <div>
+        <div class="settings-section-header" style="margin-bottom:1rem;">
+          <h2 class="settings-section-title">live preview</h2>
+          <span class="settings-section-sub">Settings changes apply in real-time</span>
+        </div>
+        <div class="preview-box">
+          <span style="color:var(--text-color);">the</span>
+          <span style="color:var(--text-color);">quick</span>
+          <span style="color:var(--main-color); border-bottom: 2px solid var(--main-color);">br<span style="color:var(--caret-color);">|</span>own</span>
+          <span style="color:var(--sub-color);">fox</span>
+          <span style="color:var(--sub-color);">jumps</span>
+        </div>
+      </div>
+
+      <!-- Section: Themes -->
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2 class="settings-section-title">themes</h2>
+          <span class="settings-section-sub">Select your preferred color scheme</span>
+        </div>
+        <div class="theme-grid" id="themeGrid">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+
+      <!-- Section: Typography -->
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2 class="settings-section-title">typography</h2>
+          <span class="settings-section-sub">Font family and text sizing</span>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">font family</span>
+            <span class="setting-desc">Select monospace font for typing text</span>
+          </div>
+          <div class="setting-control">
+            <select class="setting-select" id="fontFamilySelect">
+              <option value="Space Mono">Space Mono</option>
+              <option value="JetBrains Mono">JetBrains Mono</option>
+              <option value="Roboto Mono">Roboto Mono</option>
+              <option value="Fira Code">Fira Code</option>
+              <option value="monospace">System Monospace</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">font size</span>
+            <span class="setting-desc">Adjust size of words in the typing area</span>
+          </div>
+          <div class="setting-control">
+            <div class="btn-group" id="fontSizeGroup">
+              <button data-size="small">small</button>
+              <button data-size="medium" class="active">medium</button>
+              <button data-size="large">large</button>
+              <button data-size="xlarge">xlarge</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Caret -->
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2 class="settings-section-title">caret</h2>
+          <span class="settings-section-sub">Cursor appearance and movement behavior</span>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">caret style</span>
+            <span class="setting-desc">Shape of the active typing cursor</span>
+          </div>
+          <div class="setting-control">
+            <div class="btn-group" id="caretStyleGroup">
+              <button data-caret="line" class="active">line</button>
+              <button data-caret="block">block</button>
+              <button data-caret="underline">underline</button>
+              <button data-caret="outline">outline</button>
+              <button data-caret="off">off</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">smooth caret</span>
+            <span class="setting-desc">Smoothly glide caret between characters</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="smoothCaretToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Behavior & Gameplay -->
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2 class="settings-section-title">behavior</h2>
+          <span class="settings-section-sub">Typing test mechanics and difficulty</span>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">sound effects</span>
+            <span class="setting-desc">Web Audio mechanical click feedback while typing</span>
+          </div>
+          <div class="setting-control">
+            <select class="setting-select" id="soundSelect">
+              <option value="click">mechanical click</option>
+              <option value="off">off (silent)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">live wpm</span>
+            <span class="setting-desc">Display real-time WPM in the HUD while typing</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="liveWpmToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">live accuracy</span>
+            <span class="setting-desc">Display real-time accuracy percentage in HUD</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="liveAccToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">focus mode</span>
+            <span class="setting-desc">Hide headers, buttons, and chrome during typing</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="focusModeToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">confidence mode</span>
+            <span class="setting-desc">Disables backspace &mdash; forced forward typing</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="confidenceModeToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">freedom mode</span>
+            <span class="setting-desc">Allow backspacing to previously completed words</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="freedomModeToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">word difficulty</span>
+            <span class="setting-desc">Standard English words vs expanded vocabulary</span>
+          </div>
+          <div class="setting-control">
+            <select class="setting-select" id="difficultySelect">
+              <option value="normal">normal</option>
+              <option value="expert">expert (advanced vocabulary)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Backup & Restore -->
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <h2 class="settings-section-title">backup &amp; restore</h2>
+          <span class="settings-section-sub">Export or import your preferences as JSON</span>
+        </div>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+          <button class="btn-primary" onclick="window.Settings.export()">export settings</button>
+          <label class="btn-secondary" style="cursor:pointer;">
+            import settings
+            <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="handleImport(event)">
+          </label>
+          <button class="btn-secondary" style="color:var(--error-color);" onclick="resetDefaults()">reset to defaults</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-left">
+      <a class="footer-link" href="index.html">&larr; back to test</a>
+      <a class="footer-link" href="stats.html">personal statistics</a>
+    </div>
+    <div class="footer-right">
+      <span style="opacity:0.6;">rupesh ishi typing &bull; static</span>
+    </div>
+  </footer>
+
+  <script src="js/settings.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const settings = window.Settings.init();
+      renderSettingsUI(settings);
+    });
+
+    function renderSettingsUI(settings) {
+      // 1. Theme Grid
+      const themeGrid = document.getElementById('themeGrid');
+      themeGrid.innerHTML = '';
+      window.Settings.THEMES.forEach(t => {
+        const card = document.createElement('div');
+        card.className = `theme-card ${settings.theme === t.id ? 'active' : ''}`;
+        card.style.backgroundColor = t.bg;
+        card.innerHTML = `
+          <span style="font-size:0.8rem; font-weight:700; color:${t.primary};">${t.name}</span>
+          <div class="theme-preview-dots">
+            <span class="theme-dot" style="background-color:${t.primary};"></span>
+            <span class="theme-dot" style="background-color:${t.bg}; border:1px solid ${t.primary};"></span>
+          </div>
+        `;
+        card.addEventListener('click', () => {
+          window.Settings.update({ theme: t.id });
+          document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+        });
+        themeGrid.appendChild(card);
+      });
+
+      // 2. Font Family
+      const fontSelect = document.getElementById('fontFamilySelect');
+      fontSelect.value = settings.fontFamily || 'Space Mono';
+      fontSelect.addEventListener('change', () => {
+        window.Settings.update({ fontFamily: fontSelect.value });
+      });
+
+      // 3. Font Size
+      const fontBtns = document.querySelectorAll('#fontSizeGroup button');
+      fontBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.size === (settings.fontSize || 'medium'));
+        btn.addEventListener('click', () => {
+          fontBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          window.Settings.update({ fontSize: btn.dataset.size });
+        });
+      });
+
+      // 4. Caret Style
+      const caretBtns = document.querySelectorAll('#caretStyleGroup button');
+      caretBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.caret === (settings.caretStyle || 'line'));
+        btn.addEventListener('click', () => {
+          caretBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          window.Settings.update({ caretStyle: btn.dataset.caret });
+        });
+      });
+
+      // 5. Toggles
+      bindCheckbox('smoothCaretToggle', 'smoothCaret', settings);
+      bindCheckbox('liveWpmToggle', 'showLiveWpm', settings);
+      bindCheckbox('liveAccToggle', 'showLiveAcc', settings);
+      bindCheckbox('focusModeToggle', 'focusMode', settings);
+      bindCheckbox('confidenceModeToggle', 'confidenceMode', settings);
+      bindCheckbox('freedomModeToggle', 'freedomMode', settings);
+
+      // 6. Sound & Difficulty
+      const soundSelect = document.getElementById('soundSelect');
+      soundSelect.value = settings.soundOnClick || 'click';
+      soundSelect.addEventListener('change', () => {
+        window.Settings.update({ soundOnClick: soundSelect.value });
+      });
+
+      const diffSelect = document.getElementById('difficultySelect');
+      diffSelect.value = settings.difficulty || 'normal';
+      diffSelect.addEventListener('change', () => {
+        window.Settings.update({ difficulty: diffSelect.value });
+      });
+    }
+
+    function bindCheckbox(elemId, settingKey, settings) {
+      const el = document.getElementById(elemId);
+      if (!el) return;
+      el.checked = !!settings[settingKey];
+      el.addEventListener('change', () => {
+        window.Settings.update({ [settingKey]: el.checked });
+      });
+    }
+
+    function handleImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const success = window.Settings.import(event.target.result);
+        if (success) {
+          location.reload();
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetDefaults() {
+      if (confirm("Reset all settings to default values?")) {
+        localStorage.removeItem('monkey_settings');
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>

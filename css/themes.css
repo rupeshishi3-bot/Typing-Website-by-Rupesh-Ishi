@@ -1,0 +1,157 @@
+/* ============================================================
+   THEMES DEFINITION — MONKEYTYPE-INSPIRED COLOR PALETTES
+   ============================================================ */
+
+/* 1. Default: Serika Dark (Muted charcoal with vibrant yellow accent) */
+:root,
+html[data-theme="serika-dark"] {
+  --bg-color: #323437;
+  --main-color: #e2b714;
+  --caret-color: #e2b714;
+  --sub-color: #646669;
+  --sub-alt-color: #2c2e31;
+  --text-color: #d1d0c5;
+  --error-color: #ca4754;
+  --error-extra-color: #7e2a33;
+  --colorful-error-color: #ca4754;
+  --colorful-error-extra-color: #7e2a33;
+  --border-color: #3f4246;
+  --panel-bg: rgba(44, 46, 49, 0.7);
+  --theme-name: "serika dark";
+}
+
+/* 2. Carbon (Monochrome stealth with crisp orange) */
+html[data-theme="carbon"] {
+  --bg-color: #313131;
+  --main-color: #f66e0d;
+  --caret-color: #f66e0d;
+  --sub-color: #616161;
+  --sub-alt-color: #2b2b2b;
+  --text-color: #f5e6c8;
+  --error-color: #e63946;
+  --error-extra-color: #9b2226;
+  --border-color: #404040;
+  --panel-bg: rgba(43, 43, 43, 0.7);
+  --theme-name: "carbon";
+}
+
+/* 3. Nord (Arctic, north-bluish palette) */
+html[data-theme="nord"] {
+  --bg-color: #242933;
+  --main-color: #88c0d0;
+  --caret-color: #88c0d0;
+  --sub-color: #4c566a;
+  --sub-alt-color: #1e222b;
+  --text-color: #d8dee9;
+  --error-color: #bf616a;
+  --error-extra-color: #793e44;
+  --border-color: #3b4252;
+  --panel-bg: rgba(30, 34, 43, 0.7);
+  --theme-name: "nord";
+}
+
+/* 4. Dracula (Vampiric dark theme with neon pink) */
+html[data-theme="dracula"] {
+  --bg-color: #282a36;
+  --main-color: #ff79c6;
+  --caret-color: #ff79c6;
+  --sub-color: #6272a4;
+  --sub-alt-color: #21222c;
+  --text-color: #f8f8f2;
+  --error-color: #ff5555;
+  --error-extra-color: #942f2f;
+  --border-color: #44475a;
+  --panel-bg: rgba(33, 34, 44, 0.7);
+  --theme-name: "dracula";
+}
+
+/* 5. Cyberpunk (High-contrast neon cyberspace) */
+html[data-theme="cyberpunk"] {
+  --bg-color: #0b0a1a;
+  --main-color: #05d9e8;
+  --caret-color: #05d9e8;
+  --sub-color: #797cb3;
+  --sub-alt-color: #14132b;
+  --text-color: #ff2a6d;
+  --error-color: #f9f871;
+  --error-extra-color: #9e9d34;
+  --border-color: #35336e;
+  --panel-bg: rgba(20, 19, 43, 0.7);
+  --theme-name: "cyberpunk";
+}
+
+/* 6. Matrix (Terminal monochrome phosphor green) */
+html[data-theme="matrix"] {
+  --bg-color: #080d08;
+  --main-color: #15ff00;
+  --caret-color: #15ff00;
+  --sub-color: #006600;
+  --sub-alt-color: #030603;
+  --text-color: #a3ffa3;
+  --error-color: #ff3333;
+  --error-extra-color: #880000;
+  --border-color: #142814;
+  --panel-bg: rgba(10, 18, 10, 0.75);
+  --theme-name: "matrix";
+}
+
+/* 7. Paper Light (Clean, eye-friendly minimal light mode) */
+html[data-theme="light"],
+html[data-theme="paper-light"] {
+  --bg-color: #f6f8fa;
+  --main-color: #0969da;
+  --caret-color: #0969da;
+  --sub-color: #8c959f;
+  --sub-alt-color: #eaeef2;
+  --text-color: #24292f;
+  --error-color: #cf222e;
+  --error-extra-color: #82071e;
+  --border-color: #d0d7de;
+  --panel-bg: rgba(255, 255, 255, 0.8);
+  --theme-name: "paper light";
+}
+
+/* 8. Sunset (Warm dusk horizon with amber & coral) */
+html[data-theme="sunset"] {
+  --bg-color: #1a162b;
+  --main-color: #f39c12;
+  --caret-color: #f39c12;
+  --sub-color: #6c5b7b;
+  --sub-alt-color: #130f21;
+  --text-color: #f8b195;
+  --error-color: #c06c84;
+  --error-extra-color: #6c3b4a;
+  --border-color: #352c4a;
+  --panel-bg: rgba(26, 21, 45, 0.7);
+  --theme-name: "sunset";
+}
+
+/* 9. Botanical (Soothing organic forest tones) */
+html[data-theme="botanical"] {
+  --bg-color: #1b2621;
+  --main-color: #7eb09b;
+  --caret-color: #7eb09b;
+  --sub-color: #496357;
+  --sub-alt-color: #141c18;
+  --text-color: #e8efe9;
+  --error-color: #e57373;
+  --error-extra-color: #8a3b3b;
+  --border-color: #2a3a32;
+  --panel-bg: rgba(20, 28, 24, 0.7);
+  --theme-name: "botanical";
+}
+
+/* 10. Gruvbox (Retro groove warm vintage palette) */
+html[data-theme="gruvbox"] {
+  --bg-color: #282828;
+  --main-color: #fabd2f;
+  --caret-color: #fabd2f;
+  --sub-color: #928374;
+  --sub-alt-color: #1d2021;
+  --text-color: #ebdbb2;
+  --error-color: #fb4934;
+  --error-extra-color: #9d0006;
+  --border-color: #3c3836;
+  --panel-bg: rgba(29, 32, 33, 0.7);
+  --theme-name: "gruvbox";
+}
