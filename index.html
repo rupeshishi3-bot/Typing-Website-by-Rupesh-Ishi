@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rupesh Ishi Typing | Minimalist Customizable Typing Platform</title>
-  <meta name="description" content="A minimalist, customizable Monkeytype-inspired typing speed test platform with live WPM/accuracy tracking, smooth caret, multiple modes, themes, and personal statistics.">
+  <meta name="description" content="A minimalist, customizable Monkeytype-inspired typing test platform with live WPM/accuracy tracking, smooth caret, multiple modes, themes, and personal statistics.">
+  <meta property="og:title" content="Typing Website by Rupesh Ishi">
+  <meta property="og:description" content="A minimalist, customizable Monkeytype-inspired typing test platform with live WPM/accuracy tracking, smooth caret, multiple modes, themes, and personal statistics.">
   <meta name="author" content="Rupesh Ishi">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23323437'/%3E%3Cpath d='M25 40h50M25 50h35M25 60h45' stroke='%23e2b714' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E">
   
@@ -70,12 +72,13 @@
 
       <div class="config-divider"></div>
 
-      <!-- Modes: Time, Words, Quote, Custom -->
+      <!-- Modes: Time, Words, Quote, Custom, Practice -->
       <div class="config-group">
         <button class="config-btn active" data-mode="time">time</button>
         <button class="config-btn" data-mode="words">words</button>
         <button class="config-btn" data-mode="quote">quote</button>
         <button class="config-btn" data-mode="custom">custom</button>
+        <button class="config-btn" data-mode="practice">practice</button>
       </div>
 
       <div class="config-divider"></div>
@@ -179,13 +182,17 @@
 
       <!-- Action Buttons -->
       <div class="results-actions">
-        <button class="btn-primary" onclick="restartTest()">
+        <button class="btn-primary" onclick="restartTest()" title="Generate fresh words for a new test">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
           next test
         </button>
-        <button class="btn-secondary" onclick="restartTest()">
+        <button class="btn-secondary" onclick="repeatTest()" title="Retype the exact same test sequence">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           repeat
+        </button>
+        <button class="btn-secondary" id="btnPracticeErrors" onclick="practiceErrors()" title="Practice the specific words you mistyped" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          practice words
         </button>
       </div>
     </section>

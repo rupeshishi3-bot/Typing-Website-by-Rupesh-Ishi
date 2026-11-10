@@ -1,6 +1,7 @@
 /**
  * Typing Engine for Monkeytype-inspired Typing Platform
- * Core logic for character validation, smooth caret positioning, live stats, and audio feedback
+ * Core logic for character-by-character validation, smooth caret positioning,
+ * live stats, audio feedback, and responsive input synchronization.
  */
 
 class TypingEngine {
@@ -28,6 +29,7 @@ class TypingEngine {
     this.timerInterval = null;
     this.liveStatsInterval = null;
 
+    this.mode = 'time';
     this.timeLimit = 30; // seconds for time mode
     this.timeRemaining = 30;
     this.elapsedSeconds = 0;
@@ -74,12 +76,12 @@ class TypingEngine {
       gain.connect(this.audioCtx.destination);
 
       const now = this.audioCtx.currentTime;
-      const vol = settings.soundVolume !== undefined ? settings.soundVolume : 0.1;
+      const vol = settings.soundVolume !== undefined ? settings.soundVolume : 0.08;
 
       if (type === 'error') {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(140, now);
-        gain.gain.setValueAtTime(vol * 1.2, now);
+        gain.gain.setValueAtTime(vol * 1.3, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
         osc.start(now);
         osc.stop(now + 0.065);
@@ -102,26 +104,30 @@ class TypingEngine {
       this.typingBox.addEventListener('click', () => this.focusInput());
     }
 
-    // Physical Keyboard Events
+    // Physical Keyboard Events (Desktop)
     window.addEventListener('keydown', (e) => this.handleKeyDown(e));
     window.addEventListener('keyup', (e) => this.handleKeyUp(e));
 
-    // Hidden Input for mobile touch keyboards
+    // Hidden Input for mobile touch keyboards and IME input
     if (this.hiddenInput) {
-      this.hiddenInput.addEventListener('input', (e) => {
-        // Mobile input synchronization
-        const val = this.hiddenInput.value;
-        if (val) {
-          const char = val.slice(-1);
-          this.processCharInput(char);
-          this.hiddenInput.value = '';
+      this.hiddenInput.addEventListener('input', (e) => this.handleInput(e));
+      this.hiddenInput.addEventListener('focus', () => {
+        const unfocused = document.getElementById('unfocusedOverlay');
+        if (unfocused) unfocused.hidden = true;
+      });
+      this.hiddenInput.addEventListener('blur', () => {
+        if (!this.isFinished) {
+          const unfocused = document.getElementById('unfocusedOverlay');
+          if (unfocused) unfocused.hidden = false;
         }
       });
     }
 
-    // Resize recalculation for smooth caret coordinates
+    // Window resize recalculation for smooth caret coordinates
     window.addEventListener('resize', () => {
       this.updateCaretPosition();
+      const currentWordEl = this.wordsWrapper ? this.wordsWrapper.children[this.currentWordIdx] : null;
+      if (currentWordEl) this.scrollWordIntoView(currentWordEl);
     });
   }
 
@@ -152,7 +158,7 @@ class TypingEngine {
     setTimeout(() => {
       this.updateCaretPosition();
       this.focusInput();
-    }, 20);
+    }, 25);
   }
 
   reset() {
@@ -184,6 +190,10 @@ class TypingEngine {
       this.wordsWrapper.style.transform = 'translateY(0px)';
     }
 
+    if (this.hiddenInput) {
+      this.hiddenInput.value = '';
+    }
+
     const unfocused = document.getElementById('unfocusedOverlay');
     if (unfocused) unfocused.hidden = true;
 
@@ -198,7 +208,7 @@ class TypingEngine {
 
     this.words.forEach((wordText, wordIdx) => {
       const wordEl = document.createElement('div');
-      wordEl.className = 'word';
+      wordEl.className = 'word' + (wordIdx === 0 ? ' active' : '');
       wordEl.dataset.wordIndex = wordIdx;
 
       for (let i = 0; i < wordText.length; i++) {
@@ -222,12 +232,15 @@ class TypingEngine {
       this.capsLockWarning.hidden = !e.getModifierState('CapsLock');
     }
 
-    // Ignore shortcut keys
+    // Command palette shortcut Ctrl+Shift+P
+    if (e.ctrlKey && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+      e.preventDefault();
+      window.openCommandPalette && window.openCommandPalette();
+      return;
+    }
+
+    // Ignore other modifier combinations
     if (e.ctrlKey || e.metaKey || e.altKey) {
-      if (e.ctrlKey && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
-        e.preventDefault();
-        window.openCommandPalette && window.openCommandPalette();
-      }
       return;
     }
 
@@ -257,6 +270,7 @@ class TypingEngine {
       const modal = document.querySelector('.modal-backdrop.open');
       if (modal) {
         modal.classList.remove('open');
+        this.focusInput();
       } else {
         window.restartTest && window.restartTest();
       }
@@ -265,7 +279,7 @@ class TypingEngine {
 
     if (this.isFinished) return;
 
-    // First keypress starts timers
+    // Start timers on first keypress
     if (!this.isActive) {
       const isStartKey = e.key.length === 1 || e.key === ' ' || e.key === 'Backspace';
       if (isStartKey) {
@@ -278,7 +292,7 @@ class TypingEngine {
     // 1. Backspace Key
     if (e.key === 'Backspace') {
       e.preventDefault();
-      if (settings.confidenceMode) return; // Confidence mode forbids backspace
+      if (settings.confidenceMode) return;
       this.handleBackspace();
       return;
     }
@@ -290,7 +304,7 @@ class TypingEngine {
       return;
     }
 
-    // 3. Regular Character Keys
+    // 3. Regular Character Keys (printable ASCII and UTF-8 characters)
     if (e.key.length === 1) {
       e.preventDefault();
       this.processCharInput(e.key);
@@ -303,11 +317,44 @@ class TypingEngine {
     }
   }
 
+  handleInput(e) {
+    if (this.isFinished) return;
+
+    if (!this.isActive) {
+      this.startTimers();
+    }
+
+    // Handle soft keyboard backspace (e.g. on Android)
+    if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
+      const settings = window.Settings ? window.Settings.get() : {};
+      if (!settings.confidenceMode) {
+        this.handleBackspace();
+      }
+      if (this.hiddenInput) this.hiddenInput.value = '';
+      return;
+    }
+
+    // Process typed string
+    const data = e.data || (this.hiddenInput ? this.hiddenInput.value : '');
+    if (data) {
+      for (let i = 0; i < data.length; i++) {
+        const char = data[i];
+        if (char === ' ') {
+          this.handleSpace();
+        } else {
+          this.processCharInput(char);
+        }
+      }
+    }
+
+    if (this.hiddenInput) this.hiddenInput.value = '';
+  }
+
   startTimers() {
     this.isActive = true;
     this.startTime = Date.now();
 
-    // Enable focus mode if requested in settings
+    // Enable focus mode if enabled in settings
     const settings = window.Settings ? window.Settings.get() : {};
     if (settings.focusMode) {
       document.body.classList.add('focus-mode');
@@ -348,7 +395,7 @@ class TypingEngine {
   }
 
   processCharInput(char) {
-    const currentWordEl = this.wordsWrapper.children[this.currentWordIdx];
+    const currentWordEl = this.wordsWrapper ? this.wordsWrapper.children[this.currentWordIdx] : null;
     if (!currentWordEl) return;
 
     const originalWord = this.words[this.currentWordIdx];
@@ -387,7 +434,7 @@ class TypingEngine {
       this.currentLetterIdx++;
     } else {
       // Extra characters beyond word length
-      if (currentWordEl.children.length < letterCount + 10) { // Limit extra spam
+      if (currentWordEl.children.length < letterCount + 10) {
         const extraEl = document.createElement('span');
         extraEl.className = 'letter extra';
         extraEl.textContent = char;
@@ -400,13 +447,15 @@ class TypingEngine {
     }
 
     // Update active word entry
-    this.wordEntries[this.currentWordIdx].typed += char;
+    if (this.wordEntries[this.currentWordIdx]) {
+      this.wordEntries[this.currentWordIdx].typed += char;
+    }
 
     this.updateWordErrorState(currentWordEl, originalWord);
     this.updateCaretPosition();
     this.scrollWordIntoView(currentWordEl);
 
-    // Auto-complete in word or quote mode when final character is typed
+    // Auto-complete in word, quote, or custom mode when the final character of the final word is reached
     if ((this.mode === 'words' || this.mode === 'quote' || this.mode === 'custom') &&
         this.currentWordIdx === this.words.length - 1 &&
         this.currentLetterIdx >= originalWord.length) {
@@ -415,7 +464,7 @@ class TypingEngine {
   }
 
   handleBackspace() {
-    const currentWordEl = this.wordsWrapper.children[this.currentWordIdx];
+    const currentWordEl = this.wordsWrapper ? this.wordsWrapper.children[this.currentWordIdx] : null;
     if (!currentWordEl) return;
 
     const originalWord = this.words[this.currentWordIdx];
@@ -429,43 +478,55 @@ class TypingEngine {
         const lastExtra = currentWordEl.lastElementChild;
         if (lastExtra && lastExtra.classList.contains('extra')) {
           currentWordEl.removeChild(lastExtra);
+          if (this.extraChars > 0) this.extraChars--;
         }
       } else {
         // Reset normal letter
         const letterEl = currentWordEl.children[this.currentLetterIdx];
         if (letterEl) {
+          if (letterEl.classList.contains('correct') && this.correctChars > 0) {
+            this.correctChars--;
+          } else if (letterEl.classList.contains('incorrect') && this.incorrectChars > 0) {
+            this.incorrectChars--;
+          }
           letterEl.className = 'letter';
         }
       }
 
-      this.wordEntries[this.currentWordIdx].typed = this.wordEntries[this.currentWordIdx].typed.slice(0, -1);
+      if (this.wordEntries[this.currentWordIdx]) {
+        this.wordEntries[this.currentWordIdx].typed = this.wordEntries[this.currentWordIdx].typed.slice(0, -1);
+      }
       this.updateWordErrorState(currentWordEl, originalWord);
       this.updateCaretPosition();
     } else {
-      // At beginning of word: check if freedom mode allows backspacing to previous word
+      // At beginning of word: check if user can backspace to previous word
       const settings = window.Settings ? window.Settings.get() : {};
-      if (settings.freedomMode && this.currentWordIdx > 0) {
-        this.currentWordIdx--;
-        const prevWordEl = this.wordsWrapper.children[this.currentWordIdx];
-        const prevOriginal = this.words[this.currentWordIdx];
-        this.currentLetterIdx = prevWordEl.children.length;
-        this.updateCaretPosition();
-        this.scrollWordIntoView(prevWordEl);
+      if (this.currentWordIdx > 0) {
+        const prevWordEl = this.wordsWrapper.children[this.currentWordIdx - 1];
+        if (prevWordEl && (prevWordEl.classList.contains('error-word') || settings.freedomMode)) {
+          currentWordEl.classList.remove('active');
+          this.currentWordIdx--;
+          const prevWord = this.wordsWrapper.children[this.currentWordIdx];
+          prevWord.classList.add('active');
+          this.currentLetterIdx = prevWord.children.length;
+          this.updateCaretPosition();
+          this.scrollWordIntoView(prevWord);
+        }
       }
     }
   }
 
   handleSpace() {
-    const currentWordEl = this.wordsWrapper.children[this.currentWordIdx];
+    const currentWordEl = this.wordsWrapper ? this.wordsWrapper.children[this.currentWordIdx] : null;
     if (!currentWordEl) return;
 
-    // Prevent advancing on empty space if hasn't typed anything in current word
+    // Prevent advancing on empty space if nothing has been typed in current word
     if (this.currentLetterIdx === 0) return;
 
     const originalWord = this.words[this.currentWordIdx];
     const letterCount = originalWord.length;
 
-    // Check missed characters
+    // Check for missed un-typed characters in the word
     if (this.currentLetterIdx < letterCount) {
       for (let i = this.currentLetterIdx; i < letterCount; i++) {
         const letterEl = currentWordEl.children[i];
@@ -475,8 +536,24 @@ class TypingEngine {
     }
 
     this.updateWordErrorState(currentWordEl, originalWord);
+    const hasError = currentWordEl.classList.contains('error-word');
+
+    // Record correctness in wordEntries
+    if (this.wordEntries[this.currentWordIdx]) {
+      this.wordEntries[this.currentWordIdx].isCorrect = !hasError;
+    }
+
+    // Keystroke accounting for space
+    this.totalKeyStrokes++;
+    if (!hasError) {
+      this.correctChars++;
+      this.playSound('click');
+    } else {
+      this.playSound('error');
+    }
 
     // Advance to next word
+    currentWordEl.classList.remove('active');
     this.currentWordIdx++;
     this.currentLetterIdx = 0;
 
@@ -487,6 +564,8 @@ class TypingEngine {
     }
 
     const nextWordEl = this.wordsWrapper.children[this.currentWordIdx];
+    if (nextWordEl) nextWordEl.classList.add('active');
+
     this.updateCaretPosition();
     this.scrollWordIntoView(nextWordEl);
     this.updateHud();
@@ -505,39 +584,43 @@ class TypingEngine {
   }
 
   updateCaretPosition() {
-    if (!this.caret || !this.wordsWrapper) return;
+    if (!this.caret || !this.wordsWrapper || !this.typingBox) return;
 
     const currentWordEl = this.wordsWrapper.children[this.currentWordIdx];
     if (!currentWordEl) return;
 
+    const boxRect = this.typingBox.getBoundingClientRect();
     let targetLeft = 0;
     let targetTop = 0;
-
-    const wrapperRect = this.wordsWrapper.getBoundingClientRect();
+    let targetHeight = 28;
 
     if (this.currentLetterIdx < currentWordEl.children.length) {
       const letterEl = currentWordEl.children[this.currentLetterIdx];
       const letterRect = letterEl.getBoundingClientRect();
-      targetLeft = letterRect.left - wrapperRect.left;
-      targetTop = letterRect.top - wrapperRect.top + (letterRect.height * 0.15);
+      targetLeft = letterRect.left - boxRect.left;
+      targetTop = letterRect.top - boxRect.top;
+      targetHeight = letterRect.height;
     } else {
       // At the end of the word
       const lastLetter = currentWordEl.children[currentWordEl.children.length - 1];
       if (lastLetter) {
         const lastRect = lastLetter.getBoundingClientRect();
-        targetLeft = lastRect.right - wrapperRect.left;
-        targetTop = lastRect.top - wrapperRect.top + (lastRect.height * 0.15);
+        targetLeft = lastRect.right - boxRect.left;
+        targetTop = lastRect.top - boxRect.top;
+        targetHeight = lastRect.height;
       } else {
         const wordRect = currentWordEl.getBoundingClientRect();
-        targetLeft = wordRect.left - wrapperRect.left;
-        targetTop = wordRect.top - wrapperRect.top;
+        targetLeft = wordRect.left - boxRect.left;
+        targetTop = wordRect.top - boxRect.top;
+        targetHeight = wordRect.height;
       }
     }
 
-    this.caret.style.left = `${targetLeft}px`;
-    this.caret.style.top = `${targetTop}px`;
+    this.caret.style.left = `${Math.round(targetLeft)}px`;
+    this.caret.style.top = `${Math.round(targetTop + targetHeight * 0.12)}px`;
+    this.caret.style.height = `${Math.round(targetHeight * 0.78)}px`;
 
-    // Add typing class to pause blinking while striking keys
+    // Add typing class to pause blinking while typing
     this.caret.classList.add('typing');
     clearTimeout(this.caretTypingTimeout);
     this.caretTypingTimeout = setTimeout(() => {
@@ -548,25 +631,39 @@ class TypingEngine {
   scrollWordIntoView(wordEl) {
     if (!wordEl || !this.wordsWrapper || !this.typingBox) return;
 
-    const wordTop = wordEl.offsetTop;
-    const currentTransform = Math.abs(parseInt(this.wordsWrapper.style.transform.replace(/[^\d.-]/g, '') || '0', 10));
+    const firstWord = this.wordsWrapper.firstElementChild;
+    if (!firstWord) return;
 
-    // If word wraps onto the second line down, shift whole container up by one line height
-    const lineHeight = wordEl.offsetHeight * 1.5 || 38;
-    if (wordTop - currentTransform > lineHeight) {
-      const shift = wordTop - lineHeight;
-      this.wordsWrapper.style.transform = `translateY(-${shift}px)`;
+    // Determine line offset
+    const lineHeight = firstWord.offsetHeight + 10;
+    const initialTop = firstWord.offsetTop;
+    const currentWordTop = wordEl.offsetTop;
+    const lineIndex = Math.floor((currentWordTop - initialTop) / lineHeight);
+
+    // Keep active line in the middle (line 1 of 3-line view)
+    if (lineIndex > 1) {
+      const scrollOffset = (lineIndex - 1) * lineHeight;
+      this.wordsWrapper.style.transform = `translateY(-${scrollOffset}px)`;
+    } else {
+      this.wordsWrapper.style.transform = 'translateY(0px)';
+    }
+
+    // Immediately recalculate caret after smooth transition frame
+    if (typeof requestAnimationFrame !== 'undefined') {
+      requestAnimationFrame(() => this.updateCaretPosition());
+    } else {
+      setTimeout(() => this.updateCaretPosition(), 16);
     }
   }
 
   calculateNetWpm() {
-    const elapsedMinutes = Math.max((Date.now() - (this.startTime || Date.now())) / 60000, 0.015);
+    const elapsedMinutes = Math.max((Date.now() - (this.startTime || Date.now())) / 60000, 0.008);
     const wpm = (this.correctChars / 5) / elapsedMinutes;
     return Math.max(Math.round(wpm), 0);
   }
 
   calculateRawWpm() {
-    const elapsedMinutes = Math.max((Date.now() - (this.startTime || Date.now())) / 60000, 0.015);
+    const elapsedMinutes = Math.max((Date.now() - (this.startTime || Date.now())) / 60000, 0.008);
     const rawWpm = (this.totalKeyStrokes / 5) / elapsedMinutes;
     return Math.max(Math.round(rawWpm), 0);
   }
@@ -641,6 +738,22 @@ class TypingEngine {
       });
     }
 
+    // Update state of current/final active word
+    const currentWordEl = this.wordsWrapper ? this.wordsWrapper.children[this.currentWordIdx] : null;
+    if (currentWordEl && this.wordEntries[this.currentWordIdx]) {
+      this.wordEntries[this.currentWordIdx].isCorrect = !currentWordEl.classList.contains('error-word');
+    }
+
+    // Extract error words for practice drill
+    const errorWordsSet = new Set();
+    this.wordEntries.forEach(entry => {
+      if (entry.typed && (entry.isCorrect === false || entry.typed !== entry.original)) {
+        const clean = entry.original.replace(/[.,!?;:"]/g, '').toLowerCase().trim();
+        if (clean.length > 0) errorWordsSet.add(clean);
+      }
+    });
+    const errorWords = Array.from(errorWordsSet);
+
     const testSummary = {
       wpm: netWpm,
       rawWpm: rawWpm,
@@ -655,7 +768,8 @@ class TypingEngine {
       mode: `${this.mode} ${this.mode === 'time' ? this.timeLimit : this.words.length}`,
       date: Date.now(),
       wpmHistory: this.wpmHistory,
-      quoteAuthor: this.quoteAuthor
+      quoteAuthor: this.quoteAuthor,
+      errorWords: errorWords
     };
 
     this.onComplete(testSummary);

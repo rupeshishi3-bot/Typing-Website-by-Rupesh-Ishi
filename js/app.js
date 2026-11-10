@@ -4,6 +4,7 @@
 
 let engine = null;
 let currentWords = [];
+let lastTestSummary = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   // 1. Initialize Settings
@@ -31,8 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // 4. Start first test
   restartTest();
 
-  // 5. Global Window exposure for shortcuts
+  // 5. Global Window exposure for shortcuts and actions
   window.restartTest = restartTest;
+  window.repeatTest = repeatTest;
+  window.practiceErrors = practiceErrors;
 });
 
 function initModeControls() {
@@ -49,6 +52,7 @@ function initModeControls() {
         return;
       }
       window.Settings.update({ mode });
+      modeButtons.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
       updateConfigBarUI();
       restartTest();
     });
@@ -99,6 +103,9 @@ function updateConfigBarUI() {
   } else if (settings.mode === 'quote') {
     options = ['short', 'medium', 'long'];
     currentVal = settings.quoteOption || 'medium';
+  } else if (settings.mode === 'practice') {
+    options = ['weak words', 'zen'];
+    currentVal = settings.practiceOption || 'weak words';
   }
 
   options.forEach(opt => {
@@ -112,6 +119,8 @@ function updateConfigBarUI() {
         window.Settings.update({ wordOption: opt });
       } else if (settings.mode === 'quote') {
         window.Settings.update({ quoteOption: opt });
+      } else if (settings.mode === 'practice') {
+        window.Settings.update({ practiceOption: opt });
       }
       updateConfigBarUI();
       restartTest();
@@ -140,6 +149,7 @@ function restartTest() {
     timeOption: settings.timeOption,
     wordOption: settings.wordOption,
     quoteOption: settings.quoteOption,
+    practiceOption: settings.practiceOption,
     punctuation: settings.punctuation,
     numbers: settings.numbers,
     difficulty: settings.difficulty,
@@ -165,7 +175,63 @@ function restartTest() {
   engine.focusInput();
 }
 
+function repeatTest() {
+  const resultsCard = document.getElementById('resultsCard');
+  const typingBox = document.getElementById('typingBox');
+  const testHud = document.getElementById('testHud');
+  const bottomBar = document.getElementById('bottomBar');
+
+  if (resultsCard) resultsCard.hidden = true;
+  if (typingBox) typingBox.style.display = 'block';
+  if (testHud) testHud.style.display = 'flex';
+  if (bottomBar) bottomBar.style.display = 'flex';
+
+  const settings = window.Settings.get();
+  if (currentWords && currentWords.length > 0) {
+    engine.start(currentWords, {
+      mode: settings.mode,
+      timeOption: settings.timeOption
+    });
+    engine.focusInput();
+  } else {
+    restartTest();
+  }
+}
+
+function practiceErrors() {
+  if (!lastTestSummary || !lastTestSummary.errorWords || lastTestSummary.errorWords.length === 0) {
+    restartTest();
+    return;
+  }
+
+  const resultsCard = document.getElementById('resultsCard');
+  const typingBox = document.getElementById('typingBox');
+  const testHud = document.getElementById('testHud');
+  const bottomBar = document.getElementById('bottomBar');
+
+  if (resultsCard) resultsCard.hidden = true;
+  if (typingBox) typingBox.style.display = 'block';
+  if (testHud) testHud.style.display = 'flex';
+  if (bottomBar) bottomBar.style.display = 'flex';
+
+  // Multiply error words to form a cohesive drill of at least 25 words
+  const errorList = lastTestSummary.errorWords;
+  const drillWords = [];
+  while (drillWords.length < 25) {
+    drillWords.push(...errorList);
+  }
+  currentWords = drillWords.slice(0, Math.max(drillWords.length, 25));
+
+  engine.start(currentWords, {
+    mode: 'words',
+    wordOption: currentWords.length
+  });
+  engine.focusInput();
+}
+
 function handleTestComplete(summary) {
+  lastTestSummary = summary;
+
   // Save result to statistics
   const { isNewPB, currentPB } = window.Statistics.saveResult(summary);
 
@@ -198,6 +264,12 @@ function handleTestComplete(summary) {
     } else {
       pbBanner.hidden = true;
     }
+  }
+
+  // Practice Errors Button
+  const btnPracticeErrors = document.getElementById('btnPracticeErrors');
+  if (btnPracticeErrors) {
+    btnPracticeErrors.hidden = !(summary.errorWords && summary.errorWords.length > 0);
   }
 
   // Draw smooth WPM canvas chart

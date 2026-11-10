@@ -9,6 +9,7 @@ function generateWords(options = {}) {
     timeOption = 30,
     wordOption = 50,
     quoteOption = 'medium',
+    practiceOption = 'weak words',
     punctuation = false,
     numbers = false,
     difficulty = 'normal',
@@ -34,6 +35,36 @@ function generateWords(options = {}) {
       };
     }
     return ["simplicity", "is", "the", "prerequisite", "for", "reliability."];
+  }
+
+  // 3. Practice Mode (Weak words drill or untimed zen)
+  if (mode === 'practice') {
+    const baseDictionary = (difficulty === 'expert' && window.ADVANCED_WORDS) 
+      ? window.ADVANCED_WORDS 
+      : (window.COMMON_WORDS || ["the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog"]);
+
+    if (practiceOption === 'zen') {
+      const zenWords = [];
+      for (let i = 0; i < 60; i++) {
+        zenWords.push(baseDictionary[Math.floor(Math.random() * baseDictionary.length)]);
+      }
+      return zenWords;
+    }
+
+    const mistypes = (window.Statistics && window.Statistics.getMistypes) ? window.Statistics.getMistypes() : {};
+    const topKeys = Object.entries(mistypes).sort((a, b) => b[1] - a[1]).slice(0, 5).map(e => e[0]);
+
+    let filtered = baseDictionary;
+    if (topKeys.length > 0) {
+      filtered = baseDictionary.filter(w => topKeys.some(k => w.includes(k)));
+      if (filtered.length < 15) filtered = baseDictionary;
+    }
+
+    const practiceWords = [];
+    for (let i = 0; i < 40; i++) {
+      practiceWords.push(filtered[Math.floor(Math.random() * filtered.length)]);
+    }
+    return practiceWords;
   }
 
   // 3. Time or Word Mode
