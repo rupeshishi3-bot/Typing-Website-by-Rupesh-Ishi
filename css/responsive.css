@@ -8,9 +8,9 @@
   }
 
   .typing-box {
-    font-size: 1.35rem;
-    line-height: 2.1rem;
-    height: 126px;
+    font-size: 1.35rem !important;
+    line-height: 2.1rem !important;
+    height: 6.3rem !important;
   }
 
   .results-hero-val {
@@ -38,9 +38,9 @@
   }
 
   .typing-box {
-    font-size: 1.25rem;
-    line-height: 2rem;
-    height: 120px;
+    font-size: 1.25rem !important;
+    line-height: 2rem !important;
+    height: 6rem !important;
   }
 
   .caret {
@@ -108,9 +108,9 @@
   }
 
   .typing-box {
-    font-size: 1.1rem;
-    line-height: 1.8rem;
-    height: 108px;
+    font-size: 1.1rem !important;
+    line-height: 1.8rem !important;
+    height: 5.4rem !important;
   }
 
   .results-details-grid {

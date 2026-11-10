@@ -367,6 +367,21 @@ function initCommandPalette() {
     }
   });
 
+  function closeCommandPalette() {
+    modal.classList.remove('open');
+    engine && engine.focusInput();
+  }
+
+  function openCommandPalette() {
+    modal.classList.add('open');
+    input.value = '';
+    renderCommands();
+    setTimeout(() => input.focus(), 50);
+  }
+
+  window.openCommandPalette = openCommandPalette;
+  window.closeCommandPalette = closeCommandPalette;
+
   if (closeBtn) {
     closeBtn.addEventListener('click', closeCommandPalette);
   }
@@ -374,18 +389,6 @@ function initCommandPalette() {
   modal.addEventListener('click', (e) => {
     if (e.target === modal) closeCommandPalette();
   });
-
-  window.openCommandPalette = function() {
-    modal.classList.add('open');
-    input.value = '';
-    renderCommands();
-    setTimeout(() => input.focus(), 50);
-  };
-
-  window.closeCommandPalette = function() {
-    modal.classList.remove('open');
-    engine && engine.focusInput();
-  };
 }
 
 function setTheme(themeId) {
@@ -428,6 +431,22 @@ function initCustomModal() {
     }
   });
 
+  function closeCustomModal() {
+    modal.classList.remove('open');
+    engine && engine.focusInput();
+  }
+
+  function openCustomModal() {
+    modal.classList.add('open');
+    if (textarea) {
+      textarea.value = window.Settings.get().customText || '';
+      setTimeout(() => textarea.focus(), 50);
+    }
+  }
+
+  window.openCustomModal = openCustomModal;
+  window.closeCustomModal = closeCustomModal;
+
   if (closeBtn) {
     closeBtn.addEventListener('click', closeCustomModal);
   }
@@ -435,19 +454,6 @@ function initCustomModal() {
   modal.addEventListener('click', (e) => {
     if (e.target === modal) closeCustomModal();
   });
-
-  window.openCustomModal = function() {
-    modal.classList.add('open');
-    if (textarea) {
-      textarea.value = window.Settings.get().customText || '';
-      setTimeout(() => textarea.focus(), 50);
-    }
-  };
-
-  window.closeCustomModal = function() {
-    modal.classList.remove('open');
-    engine && engine.focusInput();
-  };
 }
 
 function showToast(msg) {

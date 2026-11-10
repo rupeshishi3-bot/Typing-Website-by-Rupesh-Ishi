@@ -252,7 +252,7 @@ button {
   width: 100%;
   max-width: 950px;
   position: relative;
-  height: 140px;
+  height: 7.2rem;
   overflow: hidden;
   user-select: none;
   cursor: default;
@@ -260,6 +260,8 @@ button {
   line-height: 2.4rem;
   font-size: 1.6rem;
   letter-spacing: 0.5px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .words-wrapper {
@@ -267,7 +269,7 @@ button {
   display: flex;
   flex-wrap: wrap;
   width: 100%;
-  transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
   pointer-events: none;
 }
 
@@ -310,7 +312,7 @@ button {
   border-radius: 1.5px;
   pointer-events: none;
   z-index: 15;
-  transition: left 0.09s ease-out, top 0.12s ease-out;
+  transition: left 0.08s ease-out, top 0.08s ease-out;
   animation: blink 1s step-start infinite;
 }
 
@@ -366,32 +368,36 @@ button {
   color: transparent;
 }
 
-/* Unfocused Overlay Prompt */
+/* Unfocused Overlay Prompt — Clean without blur filter to prevent blurry unreadable text */
 .unfocused-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(var(--bg-color), 0.7);
-  backdrop-filter: blur(2.5px);
+  background-color: rgba(20, 20, 20, 0.45);
   z-index: 20;
   cursor: pointer;
   border-radius: 8px;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease;
 }
 
 .unfocused-msg {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--sub-color);
-  font-size: 1.05rem;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
   font-weight: 500;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 .unfocused-overlay:hover .unfocused-msg {
-  color: var(--text-color);
+  color: var(--main-color);
 }
 
 /* ============================================================

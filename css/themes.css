@@ -8,7 +8,7 @@ html[data-theme="serika-dark"] {
   --bg-color: #323437;
   --main-color: #e2b714;
   --caret-color: #e2b714;
-  --sub-color: #646669;
+  --sub-color: #7d828a;
   --sub-alt-color: #2c2e31;
   --text-color: #d1d0c5;
   --error-color: #ca4754;
@@ -25,7 +25,7 @@ html[data-theme="carbon"] {
   --bg-color: #313131;
   --main-color: #f66e0d;
   --caret-color: #f66e0d;
-  --sub-color: #616161;
+  --sub-color: #828282;
   --sub-alt-color: #2b2b2b;
   --text-color: #f5e6c8;
   --error-color: #e63946;
@@ -40,7 +40,7 @@ html[data-theme="nord"] {
   --bg-color: #242933;
   --main-color: #88c0d0;
   --caret-color: #88c0d0;
-  --sub-color: #4c566a;
+  --sub-color: #72829e;
   --sub-alt-color: #1e222b;
   --text-color: #d8dee9;
   --error-color: #bf616a;
@@ -55,7 +55,7 @@ html[data-theme="dracula"] {
   --bg-color: #282a36;
   --main-color: #ff79c6;
   --caret-color: #ff79c6;
-  --sub-color: #6272a4;
+  --sub-color: #7b8ebb;
   --sub-alt-color: #21222c;
   --text-color: #f8f8f2;
   --error-color: #ff5555;
@@ -70,7 +70,7 @@ html[data-theme="cyberpunk"] {
   --bg-color: #0b0a1a;
   --main-color: #05d9e8;
   --caret-color: #05d9e8;
-  --sub-color: #797cb3;
+  --sub-color: #898cb8;
   --sub-alt-color: #14132b;
   --text-color: #ff2a6d;
   --error-color: #f9f871;
@@ -85,7 +85,7 @@ html[data-theme="matrix"] {
   --bg-color: #080d08;
   --main-color: #15ff00;
   --caret-color: #15ff00;
-  --sub-color: #006600;
+  --sub-color: #00a800;
   --sub-alt-color: #030603;
   --text-color: #a3ffa3;
   --error-color: #ff3333;
@@ -101,7 +101,7 @@ html[data-theme="paper-light"] {
   --bg-color: #f6f8fa;
   --main-color: #0969da;
   --caret-color: #0969da;
-  --sub-color: #8c959f;
+  --sub-color: #57606a;
   --sub-alt-color: #eaeef2;
   --text-color: #24292f;
   --error-color: #cf222e;
@@ -116,7 +116,7 @@ html[data-theme="sunset"] {
   --bg-color: #1a162b;
   --main-color: #f39c12;
   --caret-color: #f39c12;
-  --sub-color: #6c5b7b;
+  --sub-color: #8e7c9e;
   --sub-alt-color: #130f21;
   --text-color: #f8b195;
   --error-color: #c06c84;
@@ -131,7 +131,7 @@ html[data-theme="botanical"] {
   --bg-color: #1b2621;
   --main-color: #7eb09b;
   --caret-color: #7eb09b;
-  --sub-color: #496357;
+  --sub-color: #668878;
   --sub-alt-color: #141c18;
   --text-color: #e8efe9;
   --error-color: #e57373;
@@ -146,7 +146,7 @@ html[data-theme="gruvbox"] {
   --bg-color: #282828;
   --main-color: #fabd2f;
   --caret-color: #fabd2f;
-  --sub-color: #928374;
+  --sub-color: #a89984;
   --sub-alt-color: #1d2021;
   --text-color: #ebdbb2;
   --error-color: #fb4934;

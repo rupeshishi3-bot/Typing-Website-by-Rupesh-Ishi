@@ -35,7 +35,7 @@ class TypingEngine {
     this.elapsedSeconds = 0;
 
     this.correctChars = 0;
-    this.incorrectChars = 0;
+    this.totalErrors = 0;  // Total mistake keypresses made (both corrected and uncorrected)
     this.extraChars = 0;
     this.missedChars = 0;
     this.totalKeyStrokes = 0;
@@ -99,9 +99,17 @@ class TypingEngine {
   }
 
   bindEvents() {
-    // Focus capture
+    // Focus capture on typing box or unfocused overlay
     if (this.typingBox) {
       this.typingBox.addEventListener('click', () => this.focusInput());
+    }
+
+    const unfocused = document.getElementById('unfocusedOverlay');
+    if (unfocused) {
+      unfocused.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.focusInput();
+      });
     }
 
     // Physical Keyboard Events (Desktop)
@@ -112,22 +120,23 @@ class TypingEngine {
     if (this.hiddenInput) {
       this.hiddenInput.addEventListener('input', (e) => this.handleInput(e));
       this.hiddenInput.addEventListener('focus', () => {
-        const unfocused = document.getElementById('unfocusedOverlay');
-        if (unfocused) unfocused.hidden = true;
+        const overlay = document.getElementById('unfocusedOverlay');
+        if (overlay) overlay.hidden = true;
       });
       this.hiddenInput.addEventListener('blur', () => {
-        if (!this.isFinished) {
-          const unfocused = document.getElementById('unfocusedOverlay');
-          if (unfocused) unfocused.hidden = false;
+        // Only show overlay if test is actively running and not finished
+        if (!this.isFinished && this.isActive) {
+          const overlay = document.getElementById('unfocusedOverlay');
+          if (overlay) overlay.hidden = false;
         }
       });
     }
 
-    // Window resize recalculation for smooth caret coordinates
+    // Window resize recalculation for smooth caret coordinates and word wrapping
     window.addEventListener('resize', () => {
-      this.updateCaretPosition();
       const currentWordEl = this.wordsWrapper ? this.wordsWrapper.children[this.currentWordIdx] : null;
       if (currentWordEl) this.scrollWordIntoView(currentWordEl);
+      this.updateCaretPosition();
     });
   }
 
@@ -177,7 +186,7 @@ class TypingEngine {
     this.elapsedSeconds = 0;
 
     this.correctChars = 0;
-    this.incorrectChars = 0;
+    this.totalErrors = 0;
     this.extraChars = 0;
     this.missedChars = 0;
     this.totalKeyStrokes = 0;
@@ -194,10 +203,23 @@ class TypingEngine {
       this.hiddenInput.value = '';
     }
 
+    if (this.liveWpmEl) {
+      this.liveWpmEl.textContent = '0';
+    }
+    if (this.liveAccEl) {
+      this.liveAccEl.textContent = '100%';
+    }
+
     const unfocused = document.getElementById('unfocusedOverlay');
     if (unfocused) unfocused.hidden = true;
 
     document.body.classList.remove('focus-mode');
+  }
+
+  getWordEl(index) {
+    if (!this.wordsWrapper) return null;
+    const el = this.wordsWrapper.children[index];
+    return (el && el.classList && el.classList.contains('word')) ? el : null;
   }
 
   renderWords() {
@@ -224,12 +246,78 @@ class TypingEngine {
     });
 
     this.wordsWrapper.appendChild(frag);
+
+    // Re-attach caret inside wordsWrapper AFTER words so word indices strictly match children indices
+    if (this.caret) {
+      this.wordsWrapper.appendChild(this.caret);
+    }
+  }
+
+  appendMoreWords() {
+    const settings = window.Settings ? window.Settings.get() : {};
+    const more = window.WordGenerator.generate({
+      mode: 'words',
+      wordOption: 30,
+      punctuation: settings.punctuation,
+      numbers: settings.numbers,
+      difficulty: settings.difficulty
+    });
+
+    const frag = document.createDocumentFragment();
+    more.forEach((wordText) => {
+      const wordIdx = this.words.length;
+      this.words.push(wordText);
+
+      const wordEl = document.createElement('div');
+      wordEl.className = 'word';
+      wordEl.dataset.wordIndex = wordIdx;
+
+      for (let i = 0; i < wordText.length; i++) {
+        const letterEl = document.createElement('span');
+        letterEl.className = 'letter';
+        letterEl.textContent = wordText[i];
+        letterEl.dataset.letterIndex = i;
+        wordEl.appendChild(letterEl);
+      }
+
+      frag.appendChild(wordEl);
+      this.wordEntries.push({ typed: '', original: wordText, isCorrect: false });
+    });
+
+    if (this.caret && this.caret.parentNode === this.wordsWrapper) {
+      this.wordsWrapper.insertBefore(frag, this.caret);
+    } else {
+      this.wordsWrapper.appendChild(frag);
+    }
   }
 
   handleKeyDown(e) {
     // Check Caps Lock
-    if (this.capsLockWarning) {
+    if (this.capsLockWarning && typeof e.getModifierState === 'function') {
       this.capsLockWarning.hidden = !e.getModifierState('CapsLock');
+    }
+
+    // If any modal is open, do not intercept keys for the typing test
+    const openModal = document.querySelector('.modal-backdrop.open');
+    if (openModal) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        openModal.classList.remove('open');
+        this.focusInput();
+      }
+      return;
+    }
+
+    // If focus is in any input or textarea other than our hiddenInput, do not intercept
+    if (e.target && e.target !== this.hiddenInput && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+      return;
+    }
+
+    // Dismiss unfocused overlay immediately on keypress
+    const unfocused = document.getElementById('unfocusedOverlay');
+    if (unfocused && !unfocused.hidden) {
+      unfocused.hidden = true;
+      this.focusInput();
     }
 
     // Command palette shortcut Ctrl+Shift+P
@@ -267,13 +355,7 @@ class TypingEngine {
 
     if (e.key === 'Escape') {
       e.preventDefault();
-      const modal = document.querySelector('.modal-backdrop.open');
-      if (modal) {
-        modal.classList.remove('open');
-        this.focusInput();
-      } else {
-        window.restartTest && window.restartTest();
-      }
+      window.restartTest && window.restartTest();
       return;
     }
 
@@ -319,6 +401,11 @@ class TypingEngine {
 
   handleInput(e) {
     if (this.isFinished) return;
+
+    const unfocused = document.getElementById('unfocusedOverlay');
+    if (unfocused && !unfocused.hidden) {
+      unfocused.hidden = true;
+    }
 
     if (!this.isActive) {
       this.startTimers();
@@ -426,7 +513,7 @@ class TypingEngine {
         this.playSound('click');
       } else {
         letterEl.className = 'letter incorrect';
-        this.incorrectChars++;
+        this.totalErrors++;
         this.secondErrors++;
         this.playSound('error');
         window.Statistics && window.Statistics.recordMistype(expectedChar);
@@ -454,9 +541,10 @@ class TypingEngine {
     this.updateWordErrorState(currentWordEl, originalWord);
     this.updateCaretPosition();
     this.scrollWordIntoView(currentWordEl);
+    this.updateLiveStats();
 
-    // Auto-complete in word, quote, or custom mode when the final character of the final word is reached
-    if ((this.mode === 'words' || this.mode === 'quote' || this.mode === 'custom') &&
+    // Auto-complete in word, quote, custom, or practice mode when the final character of the final word is reached
+    if ((this.mode === 'words' || this.mode === 'quote' || this.mode === 'custom' || this.mode === 'practice') &&
         this.currentWordIdx === this.words.length - 1 &&
         this.currentLetterIdx >= originalWord.length) {
       this.finish();
@@ -486,8 +574,6 @@ class TypingEngine {
         if (letterEl) {
           if (letterEl.classList.contains('correct') && this.correctChars > 0) {
             this.correctChars--;
-          } else if (letterEl.classList.contains('incorrect') && this.incorrectChars > 0) {
-            this.incorrectChars--;
           }
           letterEl.className = 'letter';
         }
@@ -498,6 +584,7 @@ class TypingEngine {
       }
       this.updateWordErrorState(currentWordEl, originalWord);
       this.updateCaretPosition();
+      this.updateLiveStats();
     } else {
       // At beginning of word: check if user can backspace to previous word
       const settings = window.Settings ? window.Settings.get() : {};
@@ -511,6 +598,7 @@ class TypingEngine {
           this.currentLetterIdx = prevWord.children.length;
           this.updateCaretPosition();
           this.scrollWordIntoView(prevWord);
+          this.updateLiveStats();
         }
       }
     }
@@ -557,18 +645,25 @@ class TypingEngine {
     this.currentWordIdx++;
     this.currentLetterIdx = 0;
 
-    // Check if test reached end of word list
+    // In time mode, if running low on remaining words, dynamically append more
+    if (this.mode === 'time' && this.currentWordIdx >= this.words.length - 10) {
+      this.appendMoreWords();
+    }
+
+    // Check if test reached end of word list (non-time modes)
     if (this.currentWordIdx >= this.words.length) {
       this.finish();
       return;
     }
 
     const nextWordEl = this.wordsWrapper.children[this.currentWordIdx];
-    if (nextWordEl) nextWordEl.classList.add('active');
-
-    this.updateCaretPosition();
-    this.scrollWordIntoView(nextWordEl);
+    if (nextWordEl && nextWordEl.classList.contains('word')) {
+      nextWordEl.classList.add('active');
+      this.updateCaretPosition();
+      this.scrollWordIntoView(nextWordEl);
+    }
     this.updateHud();
+    this.updateLiveStats();
   }
 
   updateWordErrorState(wordEl, originalWord) {
@@ -584,37 +679,35 @@ class TypingEngine {
   }
 
   updateCaretPosition() {
-    if (!this.caret || !this.wordsWrapper || !this.typingBox) return;
+    if (!this.caret || !this.wordsWrapper) return;
 
     const currentWordEl = this.wordsWrapper.children[this.currentWordIdx];
     if (!currentWordEl) return;
 
-    const boxRect = this.typingBox.getBoundingClientRect();
     let targetLeft = 0;
     let targetTop = 0;
     let targetHeight = 28;
 
     if (this.currentLetterIdx < currentWordEl.children.length) {
       const letterEl = currentWordEl.children[this.currentLetterIdx];
-      const letterRect = letterEl.getBoundingClientRect();
-      targetLeft = letterRect.left - boxRect.left;
-      targetTop = letterRect.top - boxRect.top;
-      targetHeight = letterRect.height;
+      targetLeft = letterEl.offsetLeft;
+      targetTop = letterEl.offsetTop;
+      targetHeight = letterEl.offsetHeight;
     } else {
       // At the end of the word
       const lastLetter = currentWordEl.children[currentWordEl.children.length - 1];
       if (lastLetter) {
-        const lastRect = lastLetter.getBoundingClientRect();
-        targetLeft = lastRect.right - boxRect.left;
-        targetTop = lastRect.top - boxRect.top;
-        targetHeight = lastRect.height;
+        targetLeft = lastLetter.offsetLeft + lastLetter.offsetWidth;
+        targetTop = lastLetter.offsetTop;
+        targetHeight = lastLetter.offsetHeight;
       } else {
-        const wordRect = currentWordEl.getBoundingClientRect();
-        targetLeft = wordRect.left - boxRect.left;
-        targetTop = wordRect.top - boxRect.top;
-        targetHeight = wordRect.height;
+        targetLeft = currentWordEl.offsetLeft;
+        targetTop = currentWordEl.offsetTop;
+        targetHeight = currentWordEl.offsetHeight;
       }
     }
+
+    if (!targetHeight || targetHeight <= 0) targetHeight = 28;
 
     this.caret.style.left = `${Math.round(targetLeft)}px`;
     this.caret.style.top = `${Math.round(targetTop + targetHeight * 0.12)}px`;
@@ -629,30 +722,42 @@ class TypingEngine {
   }
 
   scrollWordIntoView(wordEl) {
-    if (!wordEl || !this.wordsWrapper || !this.typingBox) return;
+    if (!wordEl || !this.wordsWrapper) return;
 
     const firstWord = this.wordsWrapper.firstElementChild;
     if (!firstWord) return;
 
-    // Determine line offset
-    const lineHeight = firstWord.offsetHeight + 10;
-    const initialTop = firstWord.offsetTop;
     const currentWordTop = wordEl.offsetTop;
-    const lineIndex = Math.floor((currentWordTop - initialTop) / lineHeight);
+    const firstWordTop = firstWord.offsetTop;
+    const currentLineOffset = currentWordTop - firstWordTop;
 
-    // Keep active line in the middle (line 1 of 3-line view)
-    if (lineIndex > 1) {
-      const scrollOffset = (lineIndex - 1) * lineHeight;
-      this.wordsWrapper.style.transform = `translateY(-${scrollOffset}px)`;
-    } else {
-      this.wordsWrapper.style.transform = 'translateY(0px)';
+    // Detect actual line step between wrapped lines directly from DOM
+    let lineStep = 0;
+    const totalWords = this.wordsWrapper.children.length;
+    for (let i = 0; i < totalWords; i++) {
+      const el = this.wordsWrapper.children[i];
+      if (el.classList && el.classList.contains('word')) {
+        const diff = el.offsetTop - firstWordTop;
+        if (diff > 4) {
+          lineStep = diff;
+          break;
+        }
+      }
     }
 
-    // Immediately recalculate caret after smooth transition frame
-    if (typeof requestAnimationFrame !== 'undefined') {
-      requestAnimationFrame(() => this.updateCaretPosition());
+    if (!lineStep || lineStep <= 0) {
+      lineStep = wordEl.offsetHeight || 38;
+    }
+
+    // Line index (0 = line 1, 1 = line 2, 2 = line 3, etc.)
+    const lineIndex = Math.round(currentLineOffset / lineStep);
+
+    // Keep active line in the middle (line index 1) once user advances beyond line 1
+    if (lineIndex > 1) {
+      const scrollOffset = (lineIndex - 1) * lineStep;
+      this.wordsWrapper.style.transform = `translateY(-${Math.round(scrollOffset)}px)`;
     } else {
-      setTimeout(() => this.updateCaretPosition(), 16);
+      this.wordsWrapper.style.transform = 'translateY(0px)';
     }
   }
 
@@ -669,8 +774,9 @@ class TypingEngine {
   }
 
   calculateAccuracy() {
-    if (this.totalKeyStrokes === 0) return 100;
-    const acc = (this.correctChars / this.totalKeyStrokes) * 100;
+    const total = this.correctChars + this.totalErrors + this.extraChars + this.missedChars;
+    if (total === 0) return 100;
+    const acc = (this.correctChars / total) * 100;
     return Math.min(Math.max(Math.round(acc * 10) / 10, 0), 100);
   }
 
@@ -722,14 +828,26 @@ class TypingEngine {
     document.body.classList.remove('focus-mode');
 
     // Final calculations
-    const netWpm = this.calculateNetWpm();
-    const rawWpm = this.calculateRawWpm();
+    let totalTime;
+    if (this.mode === 'time') {
+      totalTime = this.timeLimit;
+    } else {
+      totalTime = Math.max(Math.round((Date.now() - (this.startTime || Date.now())) / 1000), 1);
+    }
+
+    const durationMinutes = Math.max(totalTime / 60, 0.016);
+    const netWpm = Math.max(Math.round((this.correctChars / 5) / durationMinutes), 0);
+    const rawWpm = Math.max(Math.round((this.totalKeyStrokes / 5) / durationMinutes), 0);
     const accuracy = this.calculateAccuracy();
     const consistency = this.calculateConsistency();
-    const totalTime = Math.max(Math.round((Date.now() - (this.startTime || Date.now())) / 1000), 1);
 
-    // Append last snapshot to wpm history
-    if (this.wpmHistory.length === 0 || this.wpmHistory[this.wpmHistory.length - 1].second !== totalTime) {
+    // Ensure at least 2 points in wpmHistory so canvas chart always draws
+    if (this.wpmHistory.length === 0) {
+      this.wpmHistory.push({ second: 1, wpm: netWpm, rawWpm: rawWpm, errors: this.totalErrors });
+      this.wpmHistory.push({ second: totalTime, wpm: netWpm, rawWpm: rawWpm, errors: 0 });
+    } else if (this.wpmHistory.length === 1) {
+      this.wpmHistory.push({ second: totalTime, wpm: netWpm, rawWpm: rawWpm, errors: 0 });
+    } else if (this.wpmHistory[this.wpmHistory.length - 1].second !== totalTime) {
       this.wpmHistory.push({
         second: totalTime,
         wpm: netWpm,
@@ -760,7 +878,7 @@ class TypingEngine {
       acc: accuracy,
       consistency: consistency,
       correctChars: this.correctChars,
-      incorrectChars: this.incorrectChars,
+      incorrectChars: this.totalErrors,
       extraChars: this.extraChars,
       missedChars: this.missedChars,
       totalChars: this.totalKeyStrokes,

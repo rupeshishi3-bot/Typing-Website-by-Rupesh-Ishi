@@ -106,18 +106,24 @@ function applySettings(settings) {
     xlarge: '3.3rem'
   };
   const boxHeightMap = {
-    small: '110px',
-    medium: '140px',
-    large: '165px',
-    xlarge: '195px'
+    small: '5.7rem',
+    medium: '7.2rem',
+    large: '8.4rem',
+    xlarge: '9.9rem'
   };
 
   const selectedSize = settings.fontSize || 'medium';
   const typingBox = document.querySelector('.typing-box');
   if (typingBox) {
-    typingBox.style.fontSize = sizeMap[selectedSize] || sizeMap.medium;
-    typingBox.style.lineHeight = lineHeightMap[selectedSize] || lineHeightMap.medium;
-    typingBox.style.height = boxHeightMap[selectedSize] || boxHeightMap.medium;
+    if (typeof window !== 'undefined' && window.innerWidth > 900) {
+      typingBox.style.fontSize = sizeMap[selectedSize] || sizeMap.medium;
+      typingBox.style.lineHeight = lineHeightMap[selectedSize] || lineHeightMap.medium;
+      typingBox.style.height = boxHeightMap[selectedSize] || boxHeightMap.medium;
+    } else {
+      typingBox.style.fontSize = '';
+      typingBox.style.lineHeight = '';
+      typingBox.style.height = '';
+    }
   }
 
   // 4. Apply Caret Style

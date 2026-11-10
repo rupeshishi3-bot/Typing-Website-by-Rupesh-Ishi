@@ -122,7 +122,11 @@ function clearAllData() {
  */
 function drawWpmChart(canvasId, wpmHistory = []) {
   const canvas = document.getElementById(canvasId);
-  if (!canvas || !wpmHistory || wpmHistory.length < 2) return;
+  if (!canvas || !wpmHistory || wpmHistory.length === 0) return;
+
+  if (wpmHistory.length === 1) {
+    wpmHistory = [{ second: 0, wpm: 0, rawWpm: 0, errors: 0 }, ...wpmHistory];
+  }
 
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
